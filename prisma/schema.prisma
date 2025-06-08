@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User sessions and authentication
+model Session {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  userId    String?
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  conversations Conversation[]
+  
+  @@map("sessions")
+}
+
+// Conversations between users and the chatbot
+model Conversation {
+  id        String   @id @default(cuid())
+  sessionId String
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  session  Session   @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  messages Message[]
+  
+  @@map("conversations")
+}
+
+// Individual messages in conversations
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   // 'user', 'assistant', 'system'
+  content        String
+  metadata       Json?    // Store additional data like tokens, model used, etc.
+  createdAt      DateTime @default(now())
+  
+  // Relationships
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@map("messages")
+}
+
+// Knowledge base documents (for RAG)
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  fileName    String
+  fileType    String
+  fileSize    Int
+  uploadedBy  String?  // Session ID or 'admin'
+  isPublic    Boolean  @default(false) // Admin documents are public by default
+  metadata    Json?    // Store file metadata, processing info, etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relationships
+  chunks DocumentChunk[]
+  
+  @@map("documents")
+}
+
+// Document chunks for vector embeddings
+model DocumentChunk {
+  id                String  @id @default(cuid())
+  documentId        String
+  content           String
+  embedding         String? // JSON array of embedding vectors
+  embeddingProvider String? // Provider used for embedding (openai, gemini, etc.)
+  embeddingModel    String? // Model used for embedding
+  chunkIndex        Int     // Order of chunk in document
+  metadata          Json?   // Store chunk metadata
+  createdAt         DateTime @default(now())
+  
+  // Relationships
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@map("document_chunks")
+}
+
+// LLM provider configurations
+model LLMProvider {
+  id          String   @id @default(cuid())
+  name        String   @unique // 'openai', 'gemini', 'claude', 'ollama'
+  displayName String
+  isEnabled   Boolean  @default(true)
+  apiKey      String?  // Encrypted API key
+  baseUrl     String?  // For custom endpoints like Ollama
+  models      Json     // Available models for this provider
+  config      Json?    // Provider-specific configuration
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("llm_providers")
+}
+
+// Application settings
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String // 'string', 'number', 'boolean', 'json'
+  
+  @@map("settings")
+}
+
+// Rate limiting
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   // Rate limit key (typically IP address)
+  createdAt DateTime @default(now())
+  
+  @@map("rate_limits")
+  @@index([key, createdAt])
+}

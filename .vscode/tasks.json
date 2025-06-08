@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"command": "npx prisma db push",
+			"group": "build",
+			"isBackground": false,
+			"label": "Push Database Schema",
+			"problemMatcher": [],
+			"type": "shell"
+		}
+	]
+}
