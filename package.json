@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "import-kb": "npx tsx scripts/import-knowledge-base.ts",
+    "cleanup": "npx tsx scripts/cleanup-user-documents.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.53.0",

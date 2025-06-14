@@ -275,6 +275,9 @@ export class MultiVectorService {
       console.warn('Could not generate embedding for query - returning empty results')
       return []
     }
+
+    // Always include the admin knowledge base
+    const knowledgeBaseAdmin = 'knowledge-base-admin';
     
     // Get all chunks with their embeddings
     const chunks = await prisma.documentChunk.findMany({
@@ -291,19 +294,15 @@ export class MultiVectorService {
       where: {
         embedding: { not: null },
         document: {
-          OR: [
-            { isPublic: true },
-            { uploadedBy: sessionId }
-          ]
+          // This prioritizes knowledge base documents
+          uploadedBy: knowledgeBaseAdmin
         }
       }
     })
 
     // Log number of chunks and their document info for debugging
     console.log(`[RAG DEBUG] Chunks loaded for similarity: ${chunks.length}`)
-    chunks.forEach(chunk => {
-      console.log(`[RAG DEBUG] ChunkID: ${chunk.id} | DocTitle: ${chunk.document.title} | isPublic: ${chunk.document.isPublic} | uploadedBy: ${chunk.document.uploadedBy}`)
-    })
+    
     // Calculate cosine similarity for each chunk
     const similarities = chunks.map(chunk => {
       const chunkEmbedding = JSON.parse(chunk.embedding!)
@@ -324,16 +323,12 @@ export class MultiVectorService {
     })
 
     // Sort by similarity and return top results
-    // Log all similarity scores for debugging
-    similarities.forEach(sim => {
-      console.log(`[RAG DEBUG] ChunkID: ${sim.id} | Similarity: ${sim.similarity.toFixed(4)} | Title: ${sim.metadata.documentTitle}`)
-    })
     return similarities
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, limit)
-      .filter(result => result.similarity > 0.1) // Lowered threshold for Gemini/OpenAI relevance
+      .filter(result => result.similarity > 0.1) // Lower threshold for broader matches
   }
-
+  
   private cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length) {
       console.warn(`Vector dimension mismatch: ${a.length} vs ${b.length}`)
