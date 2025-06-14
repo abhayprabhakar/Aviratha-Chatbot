@@ -49,6 +49,7 @@ import {
   Settings as SettingsIcon,
   Upload as UploadIcon,
   Chat as MessageSquareIcon,
+  Book as BookIcon,
   Delete as DeleteIcon,
   Menu as MenuIcon,
   AutoAwesome as SparklesIcon,
@@ -219,6 +220,7 @@ export default function ChatInterface() {
     }
   }
 
+  // Update the sendMessage function to handle knowledge base attribution
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading || !token) return
 
@@ -245,7 +247,7 @@ export default function ChatInterface() {
           message: userMessage,
           conversationId: currentConversationId,
           llmConfig,
-          useRAG
+          useRAG: true // Always use RAG for knowledge base
         })
       })
 
@@ -257,7 +259,9 @@ export default function ChatInterface() {
           content: data.response,
           metadata: {
             contextUsed: data.contextUsed,
-            sourcesCount: data.sourcesCount
+            sourcesCount: data.sourcesCount,
+            sourceCategories: data.sourceCategories, // New field for categories
+            fromKnowledgeBase: data.fromKnowledgeBase // New field to indicate source
           },
           createdAt: new Date().toISOString()
         }
@@ -295,35 +299,16 @@ export default function ChatInterface() {
   }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file || !token) return
-
-    setIsUploading(true)
-
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('isPublic', 'false')
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        loadDocuments(token)
-      }
-    } catch (error) {
-      console.error('File upload error:', error)
-    } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+    // File upload disabled - using knowledge base only
+    setShowSettings(false);
+    alert('Document uploads have been disabled. This chatbot uses a pre-loaded knowledge base.');
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
-  }
+  };
+
 
   const handleDeleteDocument = async (documentId: string, fileName?: string) => {
     if (!token) return
@@ -632,8 +617,11 @@ export default function ChatInterface() {
                             <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
                               <Chip
                                 icon={<FileTextIcon />}
-                                label={`Used ${message.metadata.sourcesCount} knowledge sources`}
+                                label={message.metadata.fromKnowledgeBase 
+                                  ? `From Hydroponics Knowledge Base (${message.metadata.sourceCategories})`
+                                  : `Used ${message.metadata.sourcesCount} knowledge sources`}
                                 size="small"
+                                color={message.metadata.fromKnowledgeBase ? "success" : "default"}
                                 variant="outlined"
                                 sx={{ 
                                   color: message.role === 'user' ? 'white' : 'text.secondary',
@@ -810,14 +798,15 @@ export default function ChatInterface() {
               <FileTextIcon />
               <Typography variant="h6">Knowledge Base ({documents.length})</Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<UploadIcon />}
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              {isUploading ? 'Uploading...' : 'Upload'}
-            </Button>
+            {/* Knowledge Base Indicator */}
+            <Tooltip title="This chatbot uses a specialized knowledge base">
+              <IconButton 
+                color="primary"
+                onClick={() => alert('This chatbot uses a specialized hydroponics knowledge base covering Basic Concepts, Growing Conditions, Plant Care, Troubleshooting, and FAQs.')}
+              >
+                <BookIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
         </DialogTitle>
         <DialogContent>
