@@ -342,81 +342,232 @@ export default function ChatInterface() {
   }
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
+    <Box sx={{ 
+      display: 'flex', 
+      height: '100vh', 
+      position: 'relative',
+      background: `
+        linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%),
+        radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(155, 89, 182, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(231, 76, 60, 0.03) 0%, transparent 50%)
+      `,
+      color: '#ffffff',
+      overflow: 'hidden',      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: `
+          radial-gradient(circle at 25% 25%, rgba(52, 152, 219, 0.02) 0%, transparent 1px),
+          radial-gradient(circle at 75% 25%, rgba(155, 89, 182, 0.02) 0%, transparent 1px),
+          radial-gradient(circle at 25% 75%, rgba(231, 76, 60, 0.02) 0%, transparent 1px),
+          radial-gradient(circle at 75% 75%, rgba(52, 152, 219, 0.02) 0%, transparent 1px),
+          radial-gradient(circle at 50% 50%, rgba(155, 89, 182, 0.02) 0%, transparent 1px)
+        `,
+        animation: 'sparkle 12s linear infinite',
+        zIndex: 0,
+        pointerEvents: 'none',
+        '@keyframes sparkle': {
+          '0%, 100%': { opacity: 0.2 },
+          '50%': { opacity: 0.6 }
+        }
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(45deg, transparent 48%, rgba(52, 152, 219, 0.01) 49%, rgba(52, 152, 219, 0.02) 50%, rgba(52, 152, 219, 0.01) 51%, transparent 52%)',
+        backgroundSize: '100px 100px',
+        animation: 'drift 25s linear infinite',
+        zIndex: 0,
+        pointerEvents: 'none',
+        '@keyframes drift': {
+          '0%': { transform: 'translateX(-100px) translateY(-100px)' },
+          '100%': { transform: 'translateX(100px) translateY(100px)' }
+        }
+      }
+    }}>
       {/* Mobile App Bar */}
-      {isMobile && (
-        <AppBar position="fixed" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
-          <Toolbar>
-            <IconButton
-              color="inherit"
+      {isMobile && (        <AppBar 
+          position="fixed" 
+          sx={{ 
+            zIndex: theme.zIndex.drawer + 1,
+            background: 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 50%, rgba(15, 52, 96, 0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: '1px solid rgba(52, 152, 219, 0.3)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(90deg, transparent 0%, rgba(52, 152, 219, 0.1) 50%, transparent 100%)',
+              opacity: 0.3,
+              zIndex: -1
+            }
+          }}
+        >
+          <Toolbar>            <IconButton
+              sx={{ 
+                mr: 2, 
+                color: '#3498db',
+                background: 'rgba(52, 152, 219, 0.1)',
+                '&:hover': {
+                  background: 'rgba(52, 152, 219, 0.2)',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.3s ease'
+              }}
               edge="start"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              sx={{ mr: 2 }}
             >
               <MenuIcon />
             </IconButton>
             <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-              <SparklesIcon sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="h6" noWrap>
+              <SparklesIcon sx={{ 
+                mr: 1, 
+                color: '#3498db',
+                animation: 'pulse 2s infinite',
+                '@keyframes pulse': {
+                  '0%': { opacity: 0.7 },
+                  '50%': { opacity: 1 },
+                  '100%': { opacity: 0.7 }
+                }
+              }} />
+              <Typography variant="h6" noWrap sx={{ 
+                background: 'linear-gradient(45deg, #3498db 0%, #9b59b6 50%, #e74c3c 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                fontWeight: 700,
+                textShadow: '0 0 30px rgba(52, 152, 219, 0.5)'
+              }}>
                 Hydroponics AI Assistant
               </Typography>
             </Box>
+            <Chip 
+              label="Active"
+              size="small"
+              sx={{
+                background: 'linear-gradient(45deg, #4caf50, #8bc34a)',
+                color: '#ffffff',
+                fontWeight: 600,
+                boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  left: 8,
+                  animation: 'blink 1.5s infinite',
+                  '@keyframes blink': {
+                    '0%, 50%': { opacity: 1 },
+                    '51%, 100%': { opacity: 0.3 }
+                  }
+                }
+              }}
+            />
           </Toolbar>
         </AppBar>
-      )}
-
-      {/* Sidebar */}
-      <Drawer
+      )}{/* Sidebar */}      <Drawer
         variant={isMobile ? 'temporary' : 'permanent'}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         sx={{
           width: 320,
           flexShrink: 0,
+          zIndex: theme.zIndex.drawer,
           '& .MuiDrawer-paper': {
             width: 320,
             boxSizing: 'border-box',
             mt: isMobile ? 8 : 0,
+            background: `
+              linear-gradient(180deg, rgba(22, 33, 62, 0.95) 0%, rgba(26, 26, 46, 0.95) 100%),
+              radial-gradient(circle at 50% 0%, rgba(52, 152, 219, 0.1) 0%, transparent 70%)
+            `,
+            backdropFilter: 'blur(20px)',
+            borderRight: '1px solid rgba(52, 152, 219, 0.2)',
+            color: '#ffffff',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '2px',
+              height: '100%',
+              background: 'linear-gradient(180deg, #3498db 0%, #9b59b6 50%, #e74c3c 100%)',
+              opacity: 0.8,
+              animation: 'slideUp 3s ease-in-out infinite',
+              '@keyframes slideUp': {
+                '0%': { transform: 'translateY(100%)' },
+                '50%': { transform: 'translateY(-100%)' },
+                '100%': { transform: 'translateY(100%)' }
+              }
+            }
           },
         }}
       >
         {/* Sidebar Header */}
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ p: 3, borderBottom: '1px solid rgba(52, 152, 219, 0.2)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>            <Avatar 
               sx={{ 
-                bgcolor: 'primary.main', 
+                bgcolor: 'transparent', 
                 mr: 2,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                background: 'linear-gradient(45deg, #3498db, #9b59b6)',
+                boxShadow: '0 4px 20px rgba(52, 152, 219, 0.3)'
               }}
             >
-              <SparklesIcon />
+              <SparklesIcon sx={{ color: '#ffffff' }} />
             </Avatar>
-            <Box>
-              <Typography variant="h6" fontWeight="bold">
+            <Box>              <Typography variant="h6" fontWeight="600" sx={{ 
+                color: '#ffffff',
+                background: 'linear-gradient(45deg, #3498db, #9b59b6)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
                 Hydroponics AI
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
                 Your Growing Assistant
               </Typography>
             </Box>
           </Box>
-          
-          <Button
+            <Button
             fullWidth
-            variant="contained"
+            variant="outlined"
             startIcon={<AddIcon />}
             onClick={createNewConversation}            sx={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderColor: 'rgba(52, 152, 219, 0.5)',
+              color: '#3498db',
+              background: 'rgba(52, 152, 219, 0.1)',
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-              }
+                borderColor: '#3498db',
+                background: 'rgba(52, 152, 219, 0.2)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 20px rgba(52, 152, 219, 0.3)'
+              },
+              transition: 'all 0.3s ease'
             }}
           >
             New Chat
           </Button>
-        </Box>
-
-        {/* Conversations */}
+        </Box>        {/* Conversations */}
         <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
           <List>
             {conversations.map((conversation) => (
@@ -427,27 +578,31 @@ export default function ChatInterface() {
                 sx={{
                   mx: 1,
                   mb: 0.5,
-                  borderRadius: 2,
+                  borderRadius: 2,                  color: '#ffffff',
+                  '&:hover': {
+                    bgcolor: 'rgba(52, 152, 219, 0.1)',
+                  },
                   '&.Mui-selected': {
-                    bgcolor: 'primary.main',
-                    color: 'primary.contrastText',
+                    bgcolor: 'rgba(52, 152, 219, 0.2)',
+                    borderLeft: '3px solid #3498db',
+                    background: 'linear-gradient(90deg, rgba(52, 152, 219, 0.2) 0%, transparent 100%)',
                     '&:hover': {
-                      bgcolor: 'primary.dark',
+                      bgcolor: 'rgba(52, 152, 219, 0.25)',
                     },
                     '& .MuiListItemIcon-root': {
-                      color: 'primary.contrastText',
+                      color: '#3498db',
                     },
                   },
                 }}
-              >
-                <ListItemIcon>
-                  <MessageSquareIcon />
+              >                <ListItemIcon>
+                  <MessageSquareIcon sx={{ color: 'rgba(255, 255, 255, 0.8)' }} />
                 </ListItemIcon>
                 <ListItemText
                   primary={conversation.title || 'New Chat'}
                   secondary={`${conversation.messageCount} messages`}
+                  primaryTypographyProps={{ color: '#ffffff' }}
                   secondaryTypographyProps={{
-                    color: currentConversationId === conversation.id ? 'inherit' : 'text.secondary'
+                    color: 'rgba(255, 255, 255, 0.6)'
                   }}
                 />
                 <IconButton
@@ -457,7 +612,11 @@ export default function ChatInterface() {
                     deleteConversation(conversation.id)
                   }}
                   sx={{
-                    color: currentConversationId === conversation.id ? 'inherit' : 'text.secondary'
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    '&:hover': {
+                      color: '#ffffff',
+                      bgcolor: 'rgba(255, 255, 255, 0.1)'
+                    }
                   }}
                 >
                   <DeleteIcon fontSize="small" />
@@ -465,21 +624,33 @@ export default function ChatInterface() {
               </ListItemButton>
             ))}
           </List>
-        </Box>
-
-        {/* Sidebar Footer */}
-        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        </Box>        {/* Sidebar Footer */}
+        <Box sx={{ p: 2, borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
           <Stack spacing={1}>
             <Button
               fullWidth
               variant="outlined"
               startIcon={<FileTextIcon />}
               onClick={() => setShowDocuments(true)}
-              sx={{ justifyContent: 'flex-start' }}
+              sx={{ 
+                justifyContent: 'flex-start',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                '&:hover': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                }
+              }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 <span>Knowledge Base</span>
-                <Badge badgeContent={documents.length} color="primary" sx={{ ml: 'auto' }} />
+                <Badge badgeContent={documents.length} sx={{ 
+                  ml: 'auto',
+                  '& .MuiBadge-badge': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    color: '#ffffff'
+                  }
+                }} />
               </Box>
             </Button>
             <Button
@@ -487,15 +658,50 @@ export default function ChatInterface() {
               variant="outlined"
               startIcon={<SettingsIcon />}
               onClick={() => setShowSettings(true)}
-              sx={{ justifyContent: 'flex-start' }}
+              sx={{ 
+                justifyContent: 'flex-start',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                '&:hover': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                }
+              }}
             >
               Settings
             </Button>
           </Stack>
+          
+          {/* Branding */}
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                fontSize: '0.7rem',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontWeight: 300,
+                letterSpacing: 0.5
+              }}
+            >
+              Powered by{' '}
+              <Typography 
+                component="span" 
+                variant="caption" 
+                sx={{ 
+                  fontSize: '0.7rem',
+                  fontWeight: 500,
+                  background: 'linear-gradient(135deg, #ffffff 0%, #cccccc 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                Aviratha Digital Labs
+              </Typography>
+            </Typography>
+          </Box>
         </Box>
-      </Drawer>
-
-      {/* Main Chat Area */}
+      </Drawer>      {/* Main Chat Area */}
       <Box
         component="main"
         sx={{
@@ -504,6 +710,33 @@ export default function ChatInterface() {
           flexDirection: 'column',
           height: '100vh',
           mt: isMobile ? 8 : 0,
+          background: `
+            linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%),
+            radial-gradient(circle at 20% 50%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(155, 89, 182, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(231, 76, 60, 0.05) 0%, transparent 50%)
+          `,
+          backgroundSize: '100% 100%, 800px 800px, 600px 600px, 400px 400px',
+          backgroundPosition: 'center, 0% 50%, 100% 20%, 40% 80%',
+          position: 'relative',
+          zIndex: 1,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, transparent 49%, rgba(52, 152, 219, 0.03) 50%, transparent 51%)',
+            backgroundSize: '60px 60px',
+            opacity: 0.3,
+            animation: 'float 20s ease-in-out infinite',
+            zIndex: -1,
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' }
+            }
+          }
         }}
       >
         {/* Messages Container */}
@@ -519,20 +752,31 @@ export default function ChatInterface() {
                   height: '100%',
                   textAlign: 'center',
                 }}
-              >
-                <Avatar                  sx={{
+              >                <Avatar                  sx={{
                     width: 120,
                     height: 120,
                     mb: 3,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(45deg, #3498db, #9b59b6)',
+                    boxShadow: '0 8px 32px rgba(52, 152, 219, 0.3)',
                   }}
                 >
-                  <SparklesIcon sx={{ fontSize: 60 }} />
-                </Avatar>
-                <Typography variant="h4" gutterBottom fontWeight="bold">
+                  <SparklesIcon sx={{ fontSize: 60, color: '#ffffff' }} />
+                </Avatar>                <Typography 
+                  variant="h4" 
+                  gutterBottom 
+                  fontWeight="300"
+                  sx={{
+                    background: 'linear-gradient(45deg, #3498db 0%, #9b59b6 50%, #e74c3c 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    mb: 2,
+                    fontWeight: 600
+                  }}
+                >
                   Welcome to Hydroponics AI
                 </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 4, maxWidth: 600 }}>
+                <Typography variant="h6" sx={{ mb: 4, maxWidth: 600, color: 'rgba(255, 255, 255, 0.9)', fontWeight: 300 }}>
                   Your intelligent assistant for hydroponic growing. Ask me anything about nutrient solutions, 
                   plant care, system setup, or troubleshooting!
                 </Typography>                <Box 
@@ -542,36 +786,84 @@ export default function ChatInterface() {
                     gap: 2,
                     maxWidth: 600 
                   }}
-                >
-                  <Card sx={{ height: '100%', cursor: 'pointer' }} onClick={() => setInputMessage('What nutrients does lettuce need?')}>
+                >                  <Card 
+                    sx={{ 
+                      height: '100%', 
+                      cursor: 'pointer',
+                      background: 'rgba(52, 152, 219, 0.1)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(52, 152, 219, 0.2)',
+                      borderRadius: 3,
+                      '&:hover': {
+                        background: 'rgba(52, 152, 219, 0.2)',
+                        border: '1px solid rgba(52, 152, 219, 0.4)',
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 8px 32px rgba(52, 152, 219, 0.3)'
+                      },
+                      transition: 'all 0.3s ease'
+                    }} 
+                    onClick={() => setInputMessage('What nutrients does lettuce need?')}
+                  >
                     <CardContent sx={{ textAlign: 'center' }}>
-                      <ZapIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-                      <Typography variant="h6" gutterBottom>
+                      <ZapIcon sx={{ fontSize: 40, mb: 1, color: '#3498db' }} />
+                      <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
                         Nutrients
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
                         Learn about optimal nutrient solutions
                       </Typography>
                     </CardContent>
-                  </Card>
-                  <Card sx={{ height: '100%', cursor: 'pointer' }} onClick={() => setInputMessage('How do I set up a DWC system?')}>
+                  </Card>                  <Card 
+                    sx={{ 
+                      height: '100%', 
+                      cursor: 'pointer',
+                      background: 'rgba(155, 89, 182, 0.1)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(155, 89, 182, 0.2)',
+                      borderRadius: 3,
+                      '&:hover': {
+                        background: 'rgba(155, 89, 182, 0.2)',
+                        border: '1px solid rgba(155, 89, 182, 0.4)',
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.3)'
+                      },
+                      transition: 'all 0.3s ease'
+                    }} 
+                    onClick={() => setInputMessage('How do I set up a DWC system?')}
+                  >
                     <CardContent sx={{ textAlign: 'center' }}>
-                      <SettingsIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-                      <Typography variant="h6" gutterBottom>
+                      <SettingsIcon sx={{ fontSize: 40, mb: 1, color: '#9b59b6' }} />
+                      <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
                         Setup
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
                         Get help with system configuration
                       </Typography>
                     </CardContent>
-                  </Card>
-                  <Card sx={{ height: '100%', cursor: 'pointer' }} onClick={() => setInputMessage('My plants have yellow leaves, what should I do?')}>
+                  </Card>                  <Card 
+                    sx={{ 
+                      height: '100%', 
+                      cursor: 'pointer',
+                      background: 'rgba(231, 76, 60, 0.1)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(231, 76, 60, 0.2)',
+                      borderRadius: 3,
+                      '&:hover': {
+                        background: 'rgba(231, 76, 60, 0.2)',
+                        border: '1px solid rgba(231, 76, 60, 0.4)',
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 8px 32px rgba(231, 76, 60, 0.3)'
+                      },
+                      transition: 'all 0.3s ease'
+                    }} 
+                    onClick={() => setInputMessage('My plants have yellow leaves, what should I do?')}
+                  >
                     <CardContent sx={{ textAlign: 'center' }}>
-                      <StarIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-                      <Typography variant="h6" gutterBottom>
+                      <StarIcon sx={{ fontSize: 40, mb: 1, color: '#e74c3c' }} />
+                      <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', fontWeight: 500 }}>
                         Troubleshooting
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
                         Diagnose and solve plant issues
                       </Typography>
                     </CardContent>
@@ -589,43 +881,52 @@ export default function ChatInterface() {
                         alignItems: 'flex-start',
                         gap: 2,
                       }}
-                    >
-                      <Avatar                        sx={{
-                          bgcolor: message.role === 'user' ? 'primary.main' : 'secondary.main',
-                          background: message.role === 'user' 
-                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                            : 'linear-gradient(135deg, #a8a8a8 0%, #7b7b7b 100%)',
+                    >                      <Avatar                        sx={{
+                          bgcolor: message.role === 'user' 
+                            ? 'transparent' 
+                            : 'transparent',
+                          background: message.role === 'user'
+                            ? 'linear-gradient(45deg, #3498db, #9b59b6)'
+                            : 'linear-gradient(45deg, #34495e, #2c3e50)',
+                          boxShadow: message.role === 'user'
+                            ? '0 4px 20px rgba(52, 152, 219, 0.3)'
+                            : '0 4px 20px rgba(52, 73, 94, 0.3)',
                         }}
                       >
-                        {message.role === 'user' ? <UserIcon /> : <BotIcon />}
-                      </Avatar>
-                      
-                      <Card                        sx={{
+                        {message.role === 'user' ? <UserIcon sx={{ color: '#ffffff' }} /> : <BotIcon sx={{ color: '#ffffff' }} />}
+                      </Avatar>                      <Card                        sx={{
                           maxWidth: '70%',
                           background: message.role === 'user'
-                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                            : theme.palette.background.paper,
-                          color: message.role === 'user' ? 'white' : 'text.primary',
+                            ? 'rgba(52, 152, 219, 0.15)'
+                            : 'rgba(255, 255, 255, 0.08)',
+                          backdropFilter: 'blur(20px)',
+                          border: message.role === 'user'
+                            ? '1px solid rgba(52, 152, 219, 0.3)'
+                            : '1px solid rgba(255, 255, 255, 0.15)',
+                          borderRadius: 3,
+                          color: '#ffffff',
+                          boxShadow: message.role === 'user'
+                            ? '0 4px 20px rgba(52, 152, 219, 0.2)'
+                            : '0 4px 20px rgba(0, 0, 0, 0.2)',
                         }}
-                      >                        <CardContent>
+                      ><CardContent>
                           <MarkdownRenderer 
                             content={message.content} 
                             isUserMessage={message.role === 'user'}
                           />
-                          
-                          {message.metadata?.contextUsed && (
-                            <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                            {message.metadata?.contextUsed && (
+                            <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
                               <Chip
                                 icon={<FileTextIcon />}
                                 label={message.metadata.fromKnowledgeBase 
                                   ? `From Hydroponics Knowledge Base (${message.metadata.sourceCategories})`
                                   : `Used ${message.metadata.sourcesCount} knowledge sources`}
                                 size="small"
-                                color={message.metadata.fromKnowledgeBase ? "success" : "default"}
                                 variant="outlined"
                                 sx={{ 
-                                  color: message.role === 'user' ? 'white' : 'text.secondary',
-                                  borderColor: message.role === 'user' ? 'white' : 'divider'
+                                  color: 'rgba(255, 255, 255, 0.8)',
+                                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                                  backgroundColor: message.metadata.fromKnowledgeBase ? 'rgba(76, 175, 80, 0.1)' : 'transparent'
                                 }}
                               />
                             </Box>
@@ -634,25 +935,102 @@ export default function ChatInterface() {
                       </Card>
                     </Box>
                   </Fade>
-                ))}
-                
-                {isLoading && (
+                ))}                  {isLoading && (
                   <Zoom in>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                      <Avatar                        sx={{
-                          bgcolor: 'secondary.main',
-                          background: 'linear-gradient(135deg, #a8a8a8 0%, #7b7b7b 100%)',
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>                      <Avatar                        sx={{
+                          background: 'linear-gradient(45deg, #34495e, #2c3e50)',
+                          border: '1px solid rgba(52, 152, 219, 0.3)',
+                          boxShadow: '0 4px 20px rgba(52, 73, 94, 0.3)',
+                          animation: 'breathe 2s ease-in-out infinite',
+                          '@keyframes breathe': {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.05)' }
+                          }
                         }}
                       >
-                        <BotIcon />
-                      </Avatar>
-                      <Card>
+                        <BotIcon sx={{ color: '#ffffff' }} />
+                      </Avatar>                      <Card sx={{
+                        background: `
+                          rgba(255, 255, 255, 0.08),
+                          linear-gradient(45deg, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1))
+                        `,
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(52, 152, 219, 0.2)',
+                        borderRadius: 3,
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                        position: 'relative',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: 'linear-gradient(45deg, transparent 30%, rgba(52, 152, 219, 0.1) 50%, transparent 70%)',
+                          animation: 'shimmer 2s ease-in-out infinite',
+                          '@keyframes shimmer': {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' }
+                          }
+                        }
+                      }}>
                         <CardContent>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <CircularProgress size={20} />
-                            <Typography variant="body2" color="text.secondary">
-                              Thinking...
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Box sx={{ position: 'relative' }}>
+                              <CircularProgress 
+                                size={20} 
+                                sx={{ 
+                                  color: '#3498db',
+                                  '& .MuiCircularProgress-circle': {
+                                    strokeLinecap: 'round',
+                                  }
+                                }} 
+                              />
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: '50%',
+                                  border: '2px solid rgba(52, 152, 219, 0.2)',
+                                }}
+                              />
+                            </Box>
+                            <Typography variant="body2" sx={{ 
+                              color: '#ffffff',
+                              fontWeight: 500,
+                              animation: 'typing 1.5s ease-in-out infinite',
+                              '@keyframes typing': {
+                                '0%, 60%': { opacity: 1 },
+                                '61%, 100%': { opacity: 0.6 }
+                              }
+                            }}>
+                              AI is thinking...
                             </Typography>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              gap: 0.5,
+                              ml: 1
+                            }}>
+                              {[0, 1, 2].map((i) => (
+                                <Box
+                                  key={i}
+                                  sx={{
+                                    width: 4,
+                                    height: 4,
+                                    borderRadius: '50%',
+                                    backgroundColor: '#3498db',
+                                    animation: `bounce 1.4s ease-in-out infinite ${i * 0.2}s`,
+                                    '@keyframes bounce': {
+                                      '0%, 80%, 100%': { transform: 'scale(0.8)', opacity: 0.5 },
+                                      '40%': { transform: 'scale(1.2)', opacity: 1 }
+                                    }
+                                  }}
+                                />
+                              ))}
+                            </Box>
                           </Box>
                         </CardContent>
                       </Card>
@@ -663,17 +1041,34 @@ export default function ChatInterface() {
               </Stack>
             )}
           </Container>
-        </Box>
-
-        {/* Input Area */}
+        </Box>        {/* Input Area */}
         <Paper 
-          elevation={8}          sx={{ 
+          elevation={0}          sx={{ 
             p: 3, 
             borderRadius: 0,
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
-            backdropFilter: 'blur(10px)',
-            borderTop: 1,
-            borderColor: 'divider'
+            background: `
+              linear-gradient(135deg, rgba(22, 33, 62, 0.95) 0%, rgba(26, 26, 46, 0.95) 100%),
+              radial-gradient(circle at 50% 50%, rgba(52, 152, 219, 0.1) 0%, transparent 50%)
+            `,
+            backdropFilter: 'blur(20px)',
+            borderTop: '1px solid rgba(52, 152, 219, 0.3)',
+            boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.3)',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '1px',
+              background: 'linear-gradient(90deg, transparent 0%, #3498db 20%, #9b59b6 50%, #e74c3c 80%, transparent 100%)',
+              animation: 'shimmer 3s ease-in-out infinite',
+              '@keyframes shimmer': {
+                '0%': { opacity: 0.3 },
+                '50%': { opacity: 1 },
+                '100%': { opacity: 0.3 }
+              }
+            }
           }}
         >
           <Container maxWidth="md">
@@ -692,60 +1087,199 @@ export default function ChatInterface() {
                 }}
                 placeholder="Ask me about hydroponics..."
                 disabled={isLoading}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
+                variant="outlined"                sx={{                  '& .MuiOutlinedInput-root': {
                     borderRadius: 3,
-                    background: 'rgba(255,255,255,0.05)',
-                    backdropFilter: 'blur(10px)',
-                  }
+                    background: `
+                      rgba(255, 255, 255, 0.08),
+                      linear-gradient(45deg, rgba(52, 152, 219, 0.05), rgba(155, 89, 182, 0.05))
+                    `,
+                    backdropFilter: 'blur(15px)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(52, 152, 219, 0.2)',
+                    transition: 'all 0.3s ease',
+                    '& fieldset': {
+                      borderColor: 'rgba(52, 152, 219, 0.2)',
+                    },
+                    '&:hover': {
+                      background: `
+                        rgba(255, 255, 255, 0.12),
+                        linear-gradient(45deg, rgba(52, 152, 219, 0.08), rgba(155, 89, 182, 0.08))
+                      `,
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 8px 25px rgba(52, 152, 219, 0.2)',
+                      '& fieldset': {
+                        borderColor: 'rgba(52, 152, 219, 0.4)',
+                      }
+                    },
+                    '&.Mui-focused': {
+                      background: `
+                        rgba(255, 255, 255, 0.15),
+                        linear-gradient(45deg, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1))
+                      `,
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 12px 35px rgba(52, 152, 219, 0.3)',
+                      '& fieldset': {
+                        borderColor: 'rgba(52, 152, 219, 0.6)',
+                      }
+                    },
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    opacity: 1,
+                  },
                 }}
                 InputProps={{
                   endAdornment: inputMessage.length > 0 && (
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                       {inputMessage.length}/4000
                     </Typography>
                   ),
                 }}
               />
-              
-              <Tooltip title="Send message">
+                <Tooltip title="Send message">
                 <Fab
-                  color="primary"
                   onClick={sendMessage}
                   disabled={!inputMessage.trim() || isLoading}                  sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: !inputMessage.trim() 
+                      ? 'rgba(255, 255, 255, 0.08)' 
+                      : 'linear-gradient(45deg, #3498db, #9b59b6)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(52, 152, 219, 0.3)',
+                    boxShadow: !inputMessage.trim() 
+                      ? 'none' 
+                      : '0 8px 25px rgba(52, 152, 219, 0.4)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                      transform: 'scale(1.05)',
+                      background: !inputMessage.trim()
+                        ? 'rgba(255, 255, 255, 0.12)'
+                        : 'linear-gradient(45deg, #2980b9, #8e44ad)',
+                      transform: !inputMessage.trim() ? 'none' : 'scale(1.05) translateY(-2px)',
+                      boxShadow: !inputMessage.trim() 
+                        ? 'none' 
+                        : '0 12px 35px rgba(52, 152, 219, 0.5)',
                     },
-                    transition: 'all 0.3s ease',
+                    '&:disabled': {
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      color: 'rgba(255, 255, 255, 0.3)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      borderRadius: '50%',
+                      background: inputMessage.trim() 
+                        ? 'linear-gradient(45deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3))'
+                        : 'none',
+                      opacity: 0,
+                      animation: inputMessage.trim() ? 'pulse 2s infinite' : 'none',
+                      '@keyframes pulse': {
+                        '0%': { opacity: 0, transform: 'scale(1)' },
+                        '50%': { opacity: 0.5, transform: 'scale(1.1)' },
+                        '100%': { opacity: 0, transform: 'scale(1.2)' }
+                      }
+                    }
                   }}
                 >
-                  {isLoading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
+                  {isLoading ? (
+                    <CircularProgress 
+                      size={24} 
+                      sx={{ 
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        '& .MuiCircularProgress-circle': {
+                          animation: 'loading 1.4s ease-in-out infinite both',
+                          '@keyframes loading': {
+                            '0%': { strokeDasharray: '1px, 200px', strokeDashoffset: 0 },
+                            '50%': { strokeDasharray: '100px, 200px', strokeDashoffset: '-15px' },
+                            '100%': { strokeDasharray: '100px, 200px', strokeDashoffset: '-125px' }
+                          }
+                        }
+                      }} 
+                    />
+                  ) : (
+                    <SendIcon sx={{ 
+                      transform: inputMessage.trim() ? 'rotate(-45deg)' : 'none',
+                      transition: 'transform 0.3s ease'
+                    }} />
+                  )}
                 </Fab>
               </Tooltip>
             </Box>
           </Container>
         </Paper>
-      </Box>
-
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onClose={() => setShowSettings(false)} maxWidth="md" fullWidth>
+      </Box>      {/* Settings Dialog */}      <Dialog 
+        open={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: `
+              linear-gradient(145deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%),
+              radial-gradient(circle at 50% 0%, rgba(52, 152, 219, 0.1) 0%, transparent 70%)
+            `,
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(52, 152, 219, 0.3)',
+            borderRadius: 3,
+            color: '#ffffff',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '2px',
+              background: 'linear-gradient(90deg, #3498db 0%, #9b59b6 50%, #e74c3c 100%)',
+              borderRadius: '3px 3px 0 0'
+            }
+          }
+        }}
+      >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <SettingsIcon />
-            <Typography variant="h6">AI Configuration</Typography>
+            <SettingsIcon sx={{ color: '#ffffff' }} />
+            <Typography variant="h6" sx={{ color: '#ffffff' }}>AI Configuration</Typography>
           </Box>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
             <FormControl fullWidth>
-              <InputLabel>Provider</InputLabel>
+              <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Provider</InputLabel>
               <Select
                 value={llmConfig.provider}
                 label="Provider"
                 onChange={(e) => setLLMConfig(prev => ({ ...prev, provider: e.target.value as any }))}
+                sx={{
+                  color: '#ffffff',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                  },
+                }}                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        bgcolor: 'rgba(45, 45, 45, 0.95)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        '& .MuiMenuItem-root': {
+                          color: '#ffffff',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          },
+                        },
+                      },
+                    },
+                  }}
               >
                 <MenuItem value="openai">OpenAI GPT</MenuItem>
                 <MenuItem value="gemini">Google Gemini</MenuItem>
@@ -759,10 +1293,27 @@ export default function ChatInterface() {
               label="Model"
               value={llmConfig.model}
               onChange={(e) => setLLMConfig(prev => ({ ...prev, model: e.target.value }))}
+              sx={{
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(255, 255, 255, 0.7)',
+                },
+                '& .MuiOutlinedInput-root': {
+                  color: '#ffffff',
+                  '& fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                  },
+                },
+              }}
             />
             
             <Box>
-              <Typography gutterBottom>Temperature: {llmConfig.temperature}</Typography>
+              <Typography gutterBottom sx={{ color: '#ffffff' }}>Temperature: {llmConfig.temperature}</Typography>
               <Slider
                 value={llmConfig.temperature}
                 onChange={(_, value) => setLLMConfig(prev => ({ ...prev, temperature: value as number }))}
@@ -771,6 +1322,18 @@ export default function ChatInterface() {
                 min={0}
                 max={2}
                 valueLabelDisplay="auto"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  '& .MuiSlider-thumb': {
+                    backgroundColor: '#ffffff',
+                  },
+                  '& .MuiSlider-track': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  },
+                  '& .MuiSlider-rail': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  },
+                }}
               />
             </Box>
             
@@ -779,34 +1342,78 @@ export default function ChatInterface() {
                 <Switch
                   checked={useRAG}
                   onChange={(e) => setUseRAG(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#ffffff',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                    },
+                    '& .MuiSwitch-track': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    },
+                  }}
                 />
               }
-              label="Enable RAG (Knowledge Base)"
+              label={<Typography sx={{ color: '#ffffff' }}>Enable RAG (Knowledge Base)</Typography>}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowSettings(false)}>Close</Button>
+          <Button onClick={() => setShowSettings(false)} sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Close</Button>
         </DialogActions>
-      </Dialog>
-
-      {/* Documents Dialog */}
-      <Dialog open={showDocuments} onClose={() => setShowDocuments(false)} maxWidth="md" fullWidth>
+      </Dialog>      {/* Documents Dialog */}      <Dialog 
+        open={showDocuments} 
+        onClose={() => setShowDocuments(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: `
+              linear-gradient(145deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%),
+              radial-gradient(circle at 50% 0%, rgba(52, 152, 219, 0.1) 0%, transparent 70%)
+            `,
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(52, 152, 219, 0.3)',
+            borderRadius: 3,
+            color: '#ffffff',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '2px',
+              background: 'linear-gradient(90deg, #3498db 0%, #9b59b6 50%, #e74c3c 100%)',
+              borderRadius: '3px 3px 0 0'
+            }
+          }
+        }}
+      >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <FileTextIcon />
-              <Typography variant="h6">Knowledge Base ({documents.length})</Typography>
+              <FileTextIcon sx={{ color: '#ffffff' }} />
+              <Typography variant="h6" sx={{ color: '#ffffff' }}>Knowledge Base ({documents.length})</Typography>
             </Box>
-            {/* Knowledge Base Indicator */}
-            <Tooltip title="This chatbot uses a specialized knowledge base">
-              <IconButton 
-                color="primary"
-                onClick={() => alert('This chatbot uses a specialized hydroponics knowledge base covering Basic Concepts, Growing Conditions, Plant Care, Troubleshooting, and FAQs.')}
-              >
-                <BookIcon />
-              </IconButton>
-            </Tooltip>
+            <Button
+              variant="outlined"
+              startIcon={<UploadIcon />}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              sx={{
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                '&:hover': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                }
+              }}
+            >
+              {isUploading ? 'Uploading...' : 'Upload'}
+            </Button>
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -817,10 +1424,11 @@ export default function ChatInterface() {
             accept=".pdf,.txt,.doc,.docx,.md"
             multiple
             style={{ display: 'none' }}
-          />
-          {deleteMessage && (
+          />          {deleteMessage && (
             <Box sx={{ mb: 2 }}>
-              <Typography color={deleteMessage.includes('success') ? 'success.main' : 'error.main'}>
+              <Typography sx={{ 
+                color: deleteMessage.includes('success') ? '#4caf50' : '#f44336'
+              }}>
                 {deleteMessage}
               </Typography>
             </Box>
@@ -833,23 +1441,41 @@ export default function ChatInterface() {
               mt: 1
             }}
           >
-            {documents.map((doc) => (
-              <Card variant="outlined" key={doc.id}>
+            {documents.map((doc) => (              <Card 
+                key={doc.id}
+                sx={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  '&:hover': {
+                    background: 'rgba(255, 255, 255, 0.08)',
+                  }
+                }}
+              >
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                    {doc.fileType === 'pdf' && <PdfIcon color="error" />}
-                    {doc.fileType === 'txt' && <TxtIcon color="primary" />}
-                    {(doc.fileType === 'doc' || doc.fileType === 'docx') && <DocIcon color="info" />}
-                    <Typography variant="subtitle2" noWrap sx={{ flexGrow: 1 }}>
+                    {doc.fileType === 'pdf' && <PdfIcon sx={{ color: '#f44336' }} />}
+                    {doc.fileType === 'txt' && <TxtIcon sx={{ color: '#2196f3' }} />}
+                    {(doc.fileType === 'doc' || doc.fileType === 'docx') && <DocIcon sx={{ color: '#2196f3' }} />}
+                    <Typography variant="subtitle2" noWrap sx={{ flexGrow: 1, color: '#ffffff' }}>
                       {doc.title}
                     </Typography>
                     <Tooltip title="Delete document">
-                      <IconButton size="small" color="error" onClick={() => handleDeleteDocument(doc.id, doc.fileName)}>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleDeleteDocument(doc.id, doc.fileName)}
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          '&:hover': {
+                            color: '#f44336',
+                            background: 'rgba(244, 67, 54, 0.1)'
+                          }
+                        }}
+                      >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
                   </Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                     {formatFileSize(doc.fileSize)}
                   </Typography>
                 </CardContent>
@@ -857,19 +1483,18 @@ export default function ChatInterface() {
             ))}
           </Box>
           {documents.length === 0 && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <FileTextIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
+            <Box sx={{ textAlign: 'center', py: 4 }}>              <FileTextIcon sx={{ fontSize: 48, color: 'rgba(255, 255, 255, 0.4)', mb: 2 }} />
+              <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                 No documents uploaded yet
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
                 Upload PDF, TXT, DOC, or MD files to enhance AI responses
               </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowDocuments(false)}>Close</Button>
+          <Button onClick={() => setShowDocuments(false)} sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>
