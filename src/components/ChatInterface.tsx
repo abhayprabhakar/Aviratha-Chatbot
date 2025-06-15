@@ -496,8 +496,7 @@ export default function ChatInterface() {
                 <span>Knowledge Base</span>
                 <Badge badgeContent={documents.length} color="primary" sx={{ ml: 'auto' }} />
               </Box>
-            </Button>
-            <Button
+            </Button>            <Button
               fullWidth
               variant="outlined"
               startIcon={<SettingsIcon />}
@@ -507,6 +506,37 @@ export default function ChatInterface() {
               Settings
             </Button>
           </Stack>
+          
+          {/* Branding */}
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Typography 
+              variant="caption" 
+              color="text.secondary"
+              sx={{ 
+                fontSize: '0.7rem',
+                opacity: 0.7,
+                fontWeight: 300,
+                letterSpacing: 0.5
+              }}
+            >
+              Powered by{' '}
+              <Typography 
+                component="span" 
+                variant="caption" 
+                sx={{ 
+                  fontSize: '0.7rem',
+                  fontWeight: 500,
+                  color: 'primary.main',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                Aviratha Digital Labs
+              </Typography>
+            </Typography>
+          </Box>
         </Box>
       </Drawer>
 
