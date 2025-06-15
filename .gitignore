@@ -30,8 +30,45 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files - don't commit any environment files with sensitive keys
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+/prisma/dev.db
+/prisma/dev.db-wal
+/prisma/dev.db-shm
+/prisma/prisma/dev.db
+/prisma/dev.db-journal
+/documents.db
+/documents.db-journal
+*.sqlite
+*.sqlite-journal
+
+# Uploads and knowledge base source files (add original files to knowledge base manually)
+/uploads
+/uploads-temp
+/knowledge-base
+
+# Generated files
+/src/generated/
+
+# Development/Cleanup scripts (don't include in repository)
+__delete_*.ps1
+__delete_*.sh
+cleanup-*.ts
+
+# Logs
+/logs
+*.log
+
+# Cache
+.cache
+.eslintcache
 
 # vercel
 .vercel
