@@ -16,6 +16,38 @@ export interface ConversationData {
   messageCount: number
 }
 
+// Add these new interfaces right here, after the existing interfaces
+export interface MessageMetadata {
+  [key: string]: any; // Add index signature to make it compatible with Prisma's JSON type
+  type?: string;
+  plantData?: {
+    isPlant: boolean;
+    isHealthy?: boolean;
+    plantName: string;
+    confidence: number;
+    completeAnalysis?: string;
+    rawIdentificationResult?: any;
+    timestamp?: string;
+  };
+  timestamp?: string;
+  contextUsed?: boolean;
+  sourcesCount?: number;
+  sourceCategories?: string;
+  fromKnowledgeBase?: boolean;
+  llmProvider?: string; // Add these fields that were causing errors
+  llmModel?: string;
+  ragUsed?: boolean;
+  contextSources?: number;
+}
+
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  metadata?: MessageMetadata;
+  createdAt: string | Date;
+}
+
 export class SessionService {
   private jwtSecret: string
 
@@ -140,14 +172,14 @@ export class SessionService {
     conversationId: string, 
     role: 'user' | 'assistant' | 'system', 
     content: string,
-    metadata?: any
+    metadata?: MessageMetadata  // Update this type from 'any' to 'MessageMetadata'
   ): Promise<void> {
     await prisma.message.create({
       data: {
         conversationId,
         role,
         content,
-        metadata
+        metadata: metadata as any // Cast to 'any' for Prisma compatibility
       }
     })
 
@@ -158,7 +190,8 @@ export class SessionService {
     })
   }
 
-  async getConversationMessages(conversationId: string, sessionId: string) {
+  // And update the return type of this method:
+  async getConversationMessages(conversationId: string, sessionId: string): Promise<Message[]> {
     // Verify the conversation belongs to the session
     const conversation = await prisma.conversation.findFirst({
       where: {
@@ -180,7 +213,7 @@ export class SessionService {
       id: msg.id,
       role: msg.role as 'user' | 'assistant' | 'system',
       content: msg.content,
-      metadata: msg.metadata,
+      metadata: msg.metadata as MessageMetadata | undefined, // Add type assertion here
       createdAt: msg.createdAt
     }))
   }

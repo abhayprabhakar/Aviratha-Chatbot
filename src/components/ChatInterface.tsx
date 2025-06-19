@@ -61,7 +61,9 @@ import {
   Article as DocIcon
 } from '@mui/icons-material'
 import { UserIdentificationService } from '@/lib/user-identification'
+import { CameraAlt as CameraIcon, FileUpload as FileUploadIcon } from '@mui/icons-material'
 import MarkdownRenderer from './MarkdownRenderer'
+import { Clear as ClearIcon } from '@mui/icons-material';
 
 interface Message {
   id: string
@@ -93,6 +95,16 @@ interface LLMConfig {
   maxTokens: number
 }
 
+interface PlantIdentificationState {
+  isIdentifying: boolean;
+  error?: string;
+}
+
+interface UploadPreview {
+  file: File;
+  previewUrl: string;
+}
+
 const defaultLLMConfig: LLMConfig = {
   provider: 'gemini',
   model: 'gemini-2.0-flash',
@@ -118,7 +130,12 @@ export default function ChatInterface() {
   const [isUploading, setIsUploading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile)
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null)
-  
+
+  const [plantIdState, setPlantIdState] = useState<PlantIdentificationState>({
+    isIdentifying: false
+  })
+  const [imagePreview, setImagePreview] = useState<UploadPreview | null>(null);
+  const plantImageInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -212,6 +229,12 @@ export default function ChatInterface() {
       })
       const data = await response.json()
       if (data.success) {
+        // Add debug logging here
+        console.log("Loading conversation data:", data.messages.map((msg: any) => ({
+          id: msg.id,
+          role: msg.role,
+          metadata: msg.metadata
+        })));
         setMessages(data.messages)
         setCurrentConversationId(conversationId)
       }
@@ -220,62 +243,160 @@ export default function ChatInterface() {
     }
   }
 
-  // Update the sendMessage function to handle knowledge base attribution
+  // Update the sendMessage function to handle image uploads
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading || !token) return
+    // Don't send empty messages unless there's an image
+    if ((!inputMessage.trim() && !imagePreview) || isLoading || !token) return;
 
-    const userMessage = inputMessage.trim()
-    setInputMessage('')
-    setIsLoading(true)
-
+    // Get user message (or use default if empty with image)
+    const userMessage = inputMessage.trim() || (imagePreview ? "I've uploaded a plant image for identification and health assessment." : "");
+    
+    // Clear input field
+    setInputMessage('');
+    
+    // Add temporary message to UI
     const tempMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: userMessage,
       createdAt: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, tempMessage]);
+    setIsLoading(true);
+    
+    // Store image preview before clearing it (in case we need to reference it in the try/catch)
+    const currentImagePreview = imagePreview;
+    
+    // Clear image preview immediately after sending
+    if (imagePreview) {
+      removeImagePreview();
     }
-    setMessages(prev => [...prev, tempMessage])
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          conversationId: currentConversationId,
-          llmConfig,
-          useRAG: true // Always use RAG for knowledge base
-        })
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.response,
-          metadata: {
-            contextUsed: data.contextUsed,
-            sourcesCount: data.sourcesCount,
-            sourceCategories: data.sourceCategories, // New field for categories
-            fromKnowledgeBase: data.fromKnowledgeBase // New field to indicate source
-          },
-          createdAt: new Date().toISOString()
+      // If we had an image, upload it for plant identification
+      if (currentImagePreview) {
+        const formData = new FormData();
+        
+        // Add the file
+        formData.append('files', currentImagePreview.file);
+        
+        // Add the user's message
+        formData.append('userMessage', userMessage);
+        
+        // Add conversation ID if available
+        if (currentConversationId) {
+          formData.append('conversationId', currentConversationId);
         }
         
-        setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage])
-        setCurrentConversationId(data.conversationId)
-        loadConversations(token)
+        // Upload and identify the plant
+        const response = await fetch('/api/plant/identify', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update conversation ID and reload conversation to show results
+          setCurrentConversationId(data.conversationId);
+          loadConversation(data.conversationId);
+          loadConversations(token);
+        } else {
+          console.error('Plant identification error:', data.error);
+          // Show error in chat
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `Sorry, I couldn't identify the plant. Error: ${data.error || 'Unknown error'}`,
+            createdAt: new Date().toISOString()
+          };
+          setMessages(prev => [...prev, errorMessage]);
+        }
+      } else {
+        // Regular chat message (no image)
+        // Check if this is following a plant identification
+        const hasRecentPlantIdentification = messages.some(
+          msg => msg.metadata?.type === 'plant_identification' && 
+          // Only consider recent messages (last 5)
+          messages.indexOf(msg) > messages.length - 6
+        );
+        
+        // If this is a plant follow-up question, use the specialized endpoint
+        if (hasRecentPlantIdentification && currentConversationId) {
+          const response = await fetch('/api/chat/plant-followup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              message: userMessage,
+              conversationId: currentConversationId
+            })
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: data.response,
+              metadata: {
+                type: 'plant_followup',
+                timestamp: new Date().toISOString()
+              },
+              createdAt: new Date().toISOString()
+            };
+            
+            setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage]);
+            return;
+          }
+        }
+        
+        // Use regular chat endpoint
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            message: userMessage,
+            conversationId: currentConversationId,
+            llmConfig,
+            useRAG: true
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.response,
+            metadata: {
+              contextUsed: data.contextUsed,
+              sourcesCount: data.sourcesCount,
+              sourceCategories: data.sourceCategories,
+              fromKnowledgeBase: data.fromKnowledgeBase
+            },
+            createdAt: new Date().toISOString()
+          };
+          
+          setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage]);
+          setCurrentConversationId(data.conversationId);
+          loadConversations(token);
+        }
       }
     } catch (error) {
-      console.error('Failed to send message:', error)
+      console.error('Message send error:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const createNewConversation = () => {
     setMessages([])
@@ -332,6 +453,37 @@ export default function ChatInterface() {
       console.error('Delete document error:', error)
     }
   }
+
+  const handlePlantImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
+
+    // Only take the first file (we're limiting to one image per message)
+    const file = event.target.files[0];
+    
+    // Create a preview URL for the image
+    const previewUrl = URL.createObjectURL(file);
+    
+    // Set the preview in state
+    setImagePreview({
+      file,
+      previewUrl
+    });
+    
+    // Reset the file input for future uploads
+    if (plantImageInputRef.current) {
+      plantImageInputRef.current.value = '';
+    }
+  };
+
+  // Add this new function to remove the image preview
+  const removeImagePreview = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview.previewUrl);
+      setImagePreview(null);
+    }
+  };
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes'
@@ -620,7 +772,8 @@ export default function ChatInterface() {
                         gap: 2,
                       }}
                     >
-                      <Avatar                        sx={{
+                      <Avatar                        
+                        sx={{
                           bgcolor: message.role === 'user' ? 'primary.main' : 'secondary.main',
                           background: message.role === 'user' 
                             ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
@@ -630,18 +783,69 @@ export default function ChatInterface() {
                         {message.role === 'user' ? <UserIcon /> : <BotIcon />}
                       </Avatar>
                       
-                      <Card                        sx={{
+                      <Card                        
+                        sx={{
                           maxWidth: '70%',
                           background: message.role === 'user'
                             ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                             : theme.palette.background.paper,
                           color: message.role === 'user' ? 'white' : 'text.primary',
                         }}
-                      >                        <CardContent>
+                      >  
+                        <CardContent>                          
+                          {/* Display uploaded plant images if available */}
+                          {message.role === 'user' && message.metadata?.type === 'plant_upload' && message.metadata.uploadedImages && (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mb: 2 }}>
+                              {message.metadata.uploadedImages.map((imagePath: string, i: number) => (
+                                <Box 
+                                  key={i}
+                                  component="img"
+                                  src={imagePath}
+                                  alt="Uploaded plant"
+                                  sx={{
+                                    width: '100%',
+                                    maxHeight: 300,
+                                    objectFit: 'contain',
+                                    borderRadius: 2,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                    mb: i < message.metadata.uploadedImages.length - 1 ? 1 : 0
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          )}
+
                           <MarkdownRenderer 
                             content={message.content} 
                             isUserMessage={message.role === 'user'}
                           />
+
+                          {/* Display image reference in assistant responses if relevant */}
+                          {message.role === 'assistant' && 
+                          message.metadata?.type === 'plant_identification' && 
+                          message.metadata.plantData?.uploadedImages && (
+                            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1 }}>
+                                Analyzed plant image:
+                              </Typography>
+                              {message.metadata.plantData.uploadedImages.map((imagePath: string, i: number) => (
+                                <Box 
+                                  key={i}
+                                  component="img"
+                                  src={imagePath}
+                                  alt="Identified plant"
+                                  sx={{
+                                    maxWidth: '80%',
+                                    maxHeight: 200,
+                                    objectFit: 'contain',
+                                    borderRadius: 2,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                    opacity: 0.9,
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          )}
                           
                           {message.metadata?.contextUsed && (
                             <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
@@ -695,9 +899,19 @@ export default function ChatInterface() {
           </Container>
         </Box>
 
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          ref={plantImageInputRef}
+          onChange={handlePlantImageUpload}
+          style={{ display: 'none' }}
+        />
+
         {/* Input Area */}
         <Paper 
-          elevation={8}          sx={{ 
+          elevation={8}          
+          sx={{ 
             p: 3, 
             borderRadius: 0,
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
@@ -707,6 +921,67 @@ export default function ChatInterface() {
           }}
         >
           <Container maxWidth="md">
+            {/* Add image preview above the input box */}
+            {imagePreview && (
+              <Box sx={{ 
+                mb: 2, 
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center'
+              }}>
+                <Paper 
+                  elevation={3} 
+                  sx={{ 
+                    p: 1, 
+                    borderRadius: 2,
+                    width: 'fit-content',
+                    maxWidth: '100%',
+                    position: 'relative'
+                  }}
+                >
+                  <IconButton 
+                    size="small"
+                    onClick={removeImagePreview}
+                    sx={{ 
+                      position: 'absolute', 
+                      top: -10, 
+                      right: -10, 
+                      bgcolor: 'background.paper',
+                      boxShadow: 1,
+                      '&:hover': {
+                        bgcolor: 'error.light',
+                        color: 'white'
+                      }
+                    }}
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                  <Box 
+                    component="img"
+                    src={imagePreview.previewUrl}
+                    alt="Plant to identify"
+                    sx={{
+                      maxWidth: '100%',
+                      maxHeight: 150,
+                      borderRadius: 1,
+                      display: 'block'
+                    }}
+                  />
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      display: 'block', 
+                      textAlign: 'center',
+                      mt: 0.5,
+                      color: 'text.secondary'
+                    }}
+                  >
+                    Plant image ready to identify
+                  </Typography>
+                </Paper>
+              </Box>
+            )}
+
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
               <TextField
                 fullWidth
@@ -720,7 +995,7 @@ export default function ChatInterface() {
                     sendMessage()
                   }
                 }}
-                placeholder="Ask me about hydroponics..."
+                placeholder={imagePreview ? "Add a message about your plant (optional)..." : "Ask me about hydroponics..."}
                 disabled={isLoading}
                 variant="outlined"
                 sx={{
@@ -738,12 +1013,31 @@ export default function ChatInterface() {
                   ),
                 }}
               />
+
+              <Tooltip title="Upload plant image for identification">
+                <Fab
+                  color="primary"
+                  onClick={() => plantImageInputRef.current?.click()}
+                  disabled={isLoading || !!imagePreview}
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                      transform: 'scale(1.05)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  <CameraIcon />
+                </Fab>
+              </Tooltip>
               
-              <Tooltip title="Send message">
+              <Tooltip title={imagePreview ? "Send image for identification" : "Send message"}>
                 <Fab
                   color="primary"
                   onClick={sendMessage}
-                  disabled={!inputMessage.trim() || isLoading}                  sx={{
+                  disabled={!inputMessage.trim() && !imagePreview || isLoading}
+                  sx={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     '&:hover': {
                       background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
