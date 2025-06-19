@@ -129,6 +129,7 @@ export async function POST(request: NextRequest) {
       'assistant', 
       aiResponse,
       {
+        type: 'ai_response', // Add this type field
         llmProvider: llmConfig.provider,
         llmModel: llmConfig.model,
         ragUsed: context.length > 0,
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
         fromKnowledgeBase: fromKnowledgeBase,
         sourceCategories: sourceCategories.join(', '),
         timestamp: new Date().toISOString()
-      }
+      } as any // Add this type assertion
     )
 
     return NextResponse.json({

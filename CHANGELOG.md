@@ -1,5 +1,69 @@
 # Changelog
 
+## [1.1.0] - 2025-06-19
+
+### 🌿 Enhanced Plant Identification Features
+
+This update significantly improves the plant identification capabilities by making the system more responsive to user queries and enhancing the visual presentation.
+
+### 🔧 Changes Made
+
+#### 1. Plant Identification UI Improvements
+- **Added image preview**: Created a clipboard-style preview when uploading plant images
+- **Custom prompts support**: Users can now ask specific questions when uploading plant images
+- **Improved image display**: Plant images now display with proper sizing in the conversation
+- **Styled upload button**: Matched the plant upload button styling with the send button for UI consistency
+- **Added image removal**: Users can now remove selected images before sending
+
+#### 2. Plant Identification Backend
+- **Custom query handling**: The system now responds directly to user questions about plant images
+- **Optimized image storage**: Plant images are now saved to the public directory with unique filenames
+- **Enhanced metadata**: Added structured storage of plant data and images for follow-up questions
+- **Intelligent follow-up questions**: System suggests context-aware follow-up questions that avoid duplicating user queries
+
+#### 3. Response Generation System
+- **Context-aware responses**: Added a specialized endpoint for plant-related follow-up questions
+- **Direct query handling**: System examines user queries to provide targeted information about plant health, identification, or hydroponics
+- **Technical implementation**: Uses Plant.id API data to generate custom responses based on specific user questions
+- **Data preservation**: Stores complete plant analysis for detailed follow-up questions while showing concise initial responses
+
+### 🔍 How to Use Plant Identification
+
+1. **Upload plant images**
+   - Click the camera icon in the chat input area
+   - An image preview will appear above the text input
+   - Add an optional custom message or question about the plant
+   - Click send to process the image
+
+2. **Ask specific questions with your upload**
+   - "What are the issues in this plant image?"
+   - "Can you identify this plant?"
+   - "Is this plant suitable for hydroponics?"
+   - Or send without text for a general assessment
+
+3. **Follow up on plant identification**
+   - Choose from suggested follow-up questions
+   - Ask custom questions about the identified plant
+   - The system maintains context about your plant throughout the conversation
+
+4. **Image management**
+   - Remove unwanted images before sending using the X button
+   - Upload a new image to replace the current selection
+   - Images are automatically cleared after sending
+
+### 🔧 Technical Implementation Details
+
+- **Image Storage**: Plant images are stored in `/public/uploaded-plants/` with UUID-based filenames
+- **Metadata Structure**: Messages include `type` ('plant_upload', 'plant_identification', 'plant_followup') and detailed plant data
+- **API Integration**: Uses Plant.id API with Gemini 2.0 Flash for intelligent response generation
+- **Response Customization**: Analyzes user queries using NLP techniques to determine question intent
+- **Image Processing**: Images are optimized for display while preserving original data for analysis
+- **Query Routing**: Special routing for plant-related questions to provide consistent context
+
+
+
+
+
 ## [1.0.0] - 2025-06-14
 
 ### 🌟 Major Change: Knowledge Base Only Mode
