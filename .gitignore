@@ -53,6 +53,11 @@ yarn-error.log*
 /uploads
 /uploads-temp
 /knowledge-base
+/public/uploaded-plants/*
+
+# Keep the uploaded plants directory but ignore its contents
+!/public/uploaded-plants/
+!/public/uploaded-plants/.gitkeep
 
 # Generated files
 /src/generated/
