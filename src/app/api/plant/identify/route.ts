@@ -195,11 +195,16 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     } as any);
 
+<<<<<<< HEAD
     // Only add follow-up questions if it's a plant with sufficient confidence
     let assistantMessage = initialResponse;
     if (identificationResult.is_plant) {
       assistantMessage = `${initialResponse}${followUpQuestions}`;
     }
+=======
+    // Add follow-up questions to the initial response
+    const assistantMessage = `${initialResponse}${followUpQuestions}`;
+>>>>>>> 94adefce047281f2230a2cd33133caa130c4e45b
 
     // Add assistant response with plant information
     await sessionService.addMessage(currentConversationId, 'assistant', assistantMessage, {
