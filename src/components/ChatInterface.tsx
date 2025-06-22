@@ -1,6 +1,10 @@
 'use client'
 
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from 'react'
+=======
+import { useState, useEffect, useRef, useCallback } from 'react'
+>>>>>>> feature-bug-fix
 import {
   Box,
   Container,
@@ -13,6 +17,10 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
+<<<<<<< HEAD
+=======
+  ListItem,
+>>>>>>> feature-bug-fix
   Card,
   CardContent,
   Avatar,
@@ -39,8 +47,15 @@ import {
   useMediaQuery,
   Zoom,
   Fade,
+<<<<<<< HEAD
   Stack
 } from '@mui/material'
+=======
+  Stack,
+} from '@mui/material'
+import Grid from '@mui/material/Grid';
+
+>>>>>>> feature-bug-fix
 import {
   Send as SendIcon,
   SmartToy as BotIcon,
@@ -63,6 +78,10 @@ import {
 import { UserIdentificationService } from '@/lib/user-identification'
 import { CameraAlt as CameraIcon, FileUpload as FileUploadIcon } from '@mui/icons-material'
 import MarkdownRenderer from './MarkdownRenderer'
+<<<<<<< HEAD
+=======
+import AnimatedMessage from './AnimatedMessage'
+>>>>>>> feature-bug-fix
 import { Clear as ClearIcon } from '@mui/icons-material';
 
 interface Message {
@@ -138,6 +157,23 @@ export default function ChatInterface() {
   const plantImageInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+<<<<<<< HEAD
+=======
+  // Add this to your state declarations
+  const [sourceDialogOpen, setSourceDialogOpen] = useState(false);
+  const [currentSourceInfo, setCurrentSourceInfo] = useState<any>(null);
+  const [sending, setSending] = useState(false);  const [typedMessages, setTypedMessages] = useState<Set<string>>(new Set());
+  // Track which messages were loaded from history (don't animate these)
+  const [historyMessageIds, setHistoryMessageIds] = useState<Set<string>>(new Set())
+  
+  const handleMessageTypingComplete = useCallback((messageId: string) => {
+    setTypedMessages(prev => {
+      const newSet = new Set(prev);
+      newSet.add(messageId);
+      return newSet;
+    });
+  }, []);
+>>>>>>> feature-bug-fix
 
   useEffect(() => {
     initializeSession()
@@ -220,6 +256,7 @@ export default function ChatInterface() {
       console.error('Failed to load documents:', error)
     }
   }
+<<<<<<< HEAD
 
   const loadConversation = async (conversationId: string) => {
     if (!token) return
@@ -230,13 +267,48 @@ export default function ChatInterface() {
       const data = await response.json()
       if (data.success) {
         // Add debug logging here
+=======
+  const loadConversation = async (conversationId: string) => {
+    if (!token) return;
+    try {
+      const response = await fetch(`/api/conversations?id=${conversationId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+>>>>>>> feature-bug-fix
         console.log("Loading conversation data:", data.messages.map((msg: any) => ({
           id: msg.id,
           role: msg.role,
           metadata: msg.metadata
         })));
+<<<<<<< HEAD
         setMessages(data.messages)
         setCurrentConversationId(conversationId)
+=======
+        
+        // Mark ALL messages from loaded conversations as history (no animations)
+        // This applies to both regular and plant.id messages from past conversations
+        const historyIds = new Set<string>(
+          data.messages.map((msg: any) => msg.id)
+        );
+        
+        console.log(`Marking all ${historyIds.size} messages as history (no animation for past conversations)`);
+        
+        setHistoryMessageIds(historyIds);
+        
+        // Set all messages from past conversations as already typed
+        setTypedMessages(prev => {
+          const newSet = new Set(prev);
+          data.messages.forEach((msg: any) => {
+            newSet.add(msg.id);
+          });
+          return newSet;
+        });
+        
+        setMessages(data.messages);
+        setCurrentConversationId(conversationId);
+>>>>>>> feature-bug-fix
       }
     } catch (error) {
       console.error('Failed to load conversation:', error)
@@ -297,6 +369,7 @@ export default function ChatInterface() {
           body: formData
         });
 
+<<<<<<< HEAD
         const data = await response.json();
 
         if (data.success) {
@@ -313,6 +386,59 @@ export default function ChatInterface() {
             content: `Sorry, I couldn't identify the plant. Error: ${data.error || 'Unknown error'}`,
             createdAt: new Date().toISOString()
           };
+=======
+        const data = await response.json();        if (data.success) {
+          // Update conversation ID
+          setCurrentConversationId(data.conversationId);
+          
+          // Instead of just reloading the conversation (which would mark everything as history),
+          // We'll load it but keep track of the Plant.id message so it can animate
+          const response = await fetch(`/api/conversations?id=${data.conversationId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          const convData = await response.json();
+          
+          if (convData.success) {
+            // Find the plant identification message
+            const plantMessage = convData.messages.find((msg: any) => 
+              msg.metadata?.type === 'plant_identification'
+            );
+            
+            // Set all messages
+            setMessages(convData.messages);
+            
+            // Mark all messages EXCEPT the plant ID message as history
+            if (plantMessage) {
+              console.log('Ensuring Plant.id message will animate:', plantMessage.id);              setHistoryMessageIds(new Set(
+                convData.messages
+                  .filter((msg: any) => msg.id !== plantMessage.id)
+                  .map((msg: any) => msg.id)
+              ));
+            } else {              // No plant message found, mark all as history
+              setHistoryMessageIds(new Set(
+                convData.messages.map((msg: any) => msg.id)
+              ));
+            }
+          }
+          
+          // Still update the conversation list
+          loadConversations(token);
+        }else {
+          console.error('Plant identification error:', data.error);
+          // Show error in chat
+          const errorId = (Date.now() + 1).toString();
+          const errorMessage: Message = {
+            id: errorId,
+            role: 'assistant',
+            content: `Sorry, I couldn't identify the plant. Error: ${data.error || 'Unknown error'}`,
+            metadata: {
+              type: 'plant_error'
+            },
+            createdAt: new Date().toISOString()
+          };
+            // Make sure this error message animates by NOT adding it to historyMessageIds
+>>>>>>> feature-bug-fix
           setMessages(prev => [...prev, errorMessage]);
         }
       } else {
@@ -338,10 +464,19 @@ export default function ChatInterface() {
             })
           });
           
+<<<<<<< HEAD
           const data = await response.json();
           if (data.success) {
             const assistantMessage: Message = {
               id: (Date.now() + 1).toString(),
+=======
+          const data = await response.json();          if (data.success) {
+            // Generate a unique ID for the message
+            const messageId = (Date.now() + 1).toString();
+            
+            const assistantMessage: Message = {
+              id: messageId,
+>>>>>>> feature-bug-fix
               role: 'assistant',
               content: data.response,
               metadata: {
@@ -351,6 +486,10 @@ export default function ChatInterface() {
               createdAt: new Date().toISOString()
             };
             
+<<<<<<< HEAD
+=======
+            // Add plant followup message without marking it as history to ensure animation
+>>>>>>> feature-bug-fix
             setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage]);
             return;
           }
@@ -372,8 +511,12 @@ export default function ChatInterface() {
         });
 
         const data = await response.json();
+<<<<<<< HEAD
         if (data.success) {
           const assistantMessage: Message = {
+=======
+        if (data.success) {          const assistantMessage: Message = {
+>>>>>>> feature-bug-fix
             id: (Date.now() + 1).toString(),
             role: 'assistant',
             content: data.response,
@@ -385,7 +528,12 @@ export default function ChatInterface() {
             },
             createdAt: new Date().toISOString()
           };
+<<<<<<< HEAD
           
+=======
+            // Add new messages without marking them as history to ensure they animate
+          console.log('Adding new assistant message with ID:', assistantMessage.id, '- Not marking as history');
+>>>>>>> feature-bug-fix
           setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage]);
           setCurrentConversationId(data.conversationId);
           loadConversations(token);
@@ -397,10 +545,18 @@ export default function ChatInterface() {
       setIsLoading(false);
     }
   };
+<<<<<<< HEAD
 
   const createNewConversation = () => {
     setMessages([])
     setCurrentConversationId(null)
+=======
+  const createNewConversation = () => {
+    setMessages([]);
+    setCurrentConversationId(null);
+    // Reset history message tracking for new conversations
+    setHistoryMessageIds(new Set());
+>>>>>>> feature-bug-fix
   }
 
   const deleteConversation = async (conversationId: string) => {
@@ -813,11 +969,20 @@ export default function ChatInterface() {
                                 />
                               ))}
                             </Box>
+<<<<<<< HEAD
                           )}
 
                           <MarkdownRenderer 
                             content={message.content} 
                             isUserMessage={message.role === 'user'}
+=======
+                          )}                          <AnimatedMessage
+                            content={message.content}
+                            isUserMessage={message.role === 'user'}
+                            isComplete={typedMessages.has(message.id)}
+                            isHistoryMessage={historyMessageIds.has(message.id)}
+                            onComplete={() => handleMessageTypingComplete(message.id)}
+>>>>>>> feature-bug-fix
                           />
 
                           {/* Display image reference in assistant responses if relevant */}
@@ -852,6 +1017,7 @@ export default function ChatInterface() {
                               <Chip
                                 icon={<FileTextIcon />}
                                 label={message.metadata.fromKnowledgeBase 
+<<<<<<< HEAD
                                   ? `From Hydroponics Knowledge Base (${message.metadata.sourceCategories})`
                                   : `Used ${message.metadata.sourcesCount} knowledge sources`}
                                 size="small"
@@ -860,6 +1026,29 @@ export default function ChatInterface() {
                                 sx={{ 
                                   color: message.role === 'user' ? 'white' : 'text.secondary',
                                   borderColor: message.role === 'user' ? 'white' : 'divider'
+=======
+                                  ? `From Hydroponics Knowledge Base (${
+                                      message.metadata.sourceCategories 
+                                        ? message.metadata.sourceCategories.split(',')[0] + 
+                                          (message.metadata.sourceCategories.includes(',') ? ' & more' : '')
+                                        : 'general knowledge'
+                                    })`
+                                  : `Used ${message.metadata.sourcesCount || '?'} knowledge sources`
+                                }
+                                size="small"
+                                color={message.metadata.fromKnowledgeBase ? "success" : "default"}
+                                variant="outlined"
+                                onClick={() => {
+                                  console.log("Knowledge source metadata:", message.metadata);
+                                  setCurrentSourceInfo(message.metadata);
+                                  setSourceDialogOpen(true);
+                                }}
+                                clickable
+                                sx={{ 
+                                  color: message.role === 'user' ? 'white' : 'text.secondary',
+                                  borderColor: message.role === 'user' ? 'white' : 'divider',
+                                  cursor: 'pointer'
+>>>>>>> feature-bug-fix
                                 }}
                               />
                             </Box>
@@ -1196,6 +1385,92 @@ export default function ChatInterface() {
           <Button onClick={() => setShowDocuments(false)}>Close</Button>
         </DialogActions>
       </Dialog>
+<<<<<<< HEAD
+=======
+
+      {/* Source Info Dialog */}
+      <Dialog
+        open={sourceDialogOpen}
+        onClose={() => setSourceDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <FileTextIcon />
+            <Typography variant="h6">Knowledge Source Details</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {currentSourceInfo && (
+            <Stack spacing={3} sx={{ mt: 1 }}>
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>
+                  Source Information
+                </Typography>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box>
+                      <Typography variant="body2">
+                        <strong>Source Type:</strong> {currentSourceInfo.fromKnowledgeBase 
+                          ? "Hydroponics Knowledge Base" 
+                          : "User Documents"}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="body2">
+                        <strong>Number of Sources:</strong> {currentSourceInfo.sourcesCount || "Unknown"}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="body2">
+                        <strong>Categories:</strong>{" "}
+                        {currentSourceInfo.sourceCategories
+                          ? currentSourceInfo.sourceCategories.split(', ').map((cat: string, index: number) => (
+                              <Chip 
+                                key={`cat-${index}`}
+                                label={cat} 
+                                size="small" 
+                                color="success" 
+                                variant="outlined"
+                                sx={{ mr: 0.5, mt: 0.5 }} 
+                              />
+                            ))
+                          : "General Knowledge"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+              </Box>
+              
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>
+                  How Knowledge Base Works
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  The AI assistant combines information from relevant knowledge sources to provide accurate answers.
+                  When you ask a question, our system:
+                </Typography>
+                <List dense sx={{ listStyleType: 'decimal', pl: 4 }}>
+                  <ListItem sx={{ display: 'list-item' }}>
+                    <Typography variant="body2">Searches the knowledge base for relevant information</Typography>
+                  </ListItem>
+                  <ListItem sx={{ display: 'list-item' }}>
+                    <Typography variant="body2">Retrieves the most relevant sections from documents</Typography>
+                  </ListItem>
+                  <ListItem sx={{ display: 'list-item' }}>
+                    <Typography variant="body2">Provides answers based on this knowledge</Typography>
+                  </ListItem>
+                </List>
+              </Box>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSourceDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+>>>>>>> feature-bug-fix
     </Box>
   )
 }

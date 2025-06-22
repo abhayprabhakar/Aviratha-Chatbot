@@ -1,6 +1,10 @@
 'use client'
 
+<<<<<<< HEAD
 import React from 'react'
+=======
+import React, { useMemo } from 'react'
+>>>>>>> feature-bug-fix
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
@@ -22,9 +26,20 @@ import {
 interface MarkdownRendererProps {
   content: string
   isUserMessage?: boolean
+<<<<<<< HEAD
 }
 
 export default function MarkdownRenderer({ content, isUserMessage = false }: MarkdownRendererProps) {
+=======
+  isAnimating?: boolean  // To show animation effects like cursor
+}
+
+export default function MarkdownRenderer({ 
+  content, 
+  isUserMessage = false, 
+  isAnimating = false 
+}: MarkdownRendererProps) {
+>>>>>>> feature-bug-fix
   const theme = useTheme()
 
   const components = {
@@ -208,6 +223,7 @@ export default function MarkdownRenderer({ content, isUserMessage = false }: Mar
         {children}
       </Typography>
     ),
+<<<<<<< HEAD
   }
 
   return (
@@ -218,6 +234,104 @@ export default function MarkdownRenderer({ content, isUserMessage = false }: Mar
       >
         {content}
       </ReactMarkdown>
+=======
+  }  // Ensure we always have content to render, even if it's just a non-breaking space
+  const displayContent = content || "\u00A0"; // Use non-breaking space  // Use memo to prevent unnecessary re-renders
+  const fullContent = useMemo(() => content || '\u00A0', [content]);
+
+  // Create blinking cursor effect for animation
+  const cursorStyle = useMemo(() => ({
+    display: 'inline-block',
+    width: '0.5em',
+    height: '1em',
+    backgroundColor: theme.palette.mode === 'dark' ? '#fff' : '#000',
+    animation: 'blink 1s step-end infinite',
+    verticalAlign: 'text-bottom',
+    marginLeft: '2px',
+  }), [theme.palette.mode]);
+
+  // Handle message container sizing and stability
+  return (
+    <Box      sx={{ 
+        width: '100%',
+        minHeight: isUserMessage ? '40px' : '100px', // Higher for assistant messages
+        position: 'relative',
+        opacity: 1,
+        backgroundColor: isUserMessage ? 'inherit' : theme.palette.mode === 'dark' ? 'rgba(40, 40, 40, 0.95)' : 'rgba(245, 245, 245, 0.95)',
+        borderRadius: '8px',
+        boxShadow: isUserMessage ? 'none' : '0 1px 2px rgba(0,0,0,0.1)',
+        transition: 'all 0.3s ease-in-out', // Smoother transition
+        '& > :first-of-type': { mt: 0 }, 
+        '& > :last-child': { mb: 0 },
+        padding: '8px',
+        backdropFilter: !isUserMessage ? 'blur(5px)' : 'none', // Subtle blur effect for messages
+        animation: isAnimating && !isUserMessage ? 
+          `${theme.palette.mode === 'dark' ? 'pulseAnimationDark' : 'pulseAnimationLight'} 2s infinite ease-in-out` : 
+          'none',
+        '@keyframes pulseAnimationLight': {
+          '0%': { boxShadow: '0 1px 2px rgba(0,0,0,0.1)' },
+          '50%': { boxShadow: '0 1px 8px rgba(102, 126, 234, 0.3)' },
+          '100%': { boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }
+        },
+        '@keyframes pulseAnimationDark': {
+          '0%': { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' },
+          '50%': { boxShadow: '0 1px 8px rgba(132, 156, 224, 0.4)' },
+          '100%': { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }
+        }
+      }}
+      className="message-container"
+    >      {/* Hidden container that pre-renders the full message to get the right dimensions */}
+      {!isUserMessage && (
+        <Box 
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            visibility: 'hidden', 
+            opacity: 0,
+            pointerEvents: 'none',
+            height: 'auto', 
+            overflow: 'hidden',
+            zIndex: -1,
+            padding: '8px',
+            width: '100%',
+          }}
+          aria-hidden="true"
+          className="message-placeholder"
+        >
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm, remarkBreaks]} 
+            components={components}
+          >
+            {fullContent}
+          </ReactMarkdown>
+        </Box>
+      )}
+      
+      {/* Visible content */}      <Box
+        sx={{
+          // For non-user messages, use absolute positioning for the animated content
+          position: !isUserMessage ? 'relative' : 'static',
+          width: '100%',
+          height: '100%',
+          zIndex: 1,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+        }}
+      >
+        <Box sx={{ flexGrow: 1 }}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkBreaks]}
+            components={components}
+          >
+            {displayContent}
+          </ReactMarkdown>
+        </Box>
+          {/* Removed cursor indicator as requested */}
+      </Box>
+>>>>>>> feature-bug-fix
     </Box>
   )
 }
