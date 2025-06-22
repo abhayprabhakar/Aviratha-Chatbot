@@ -141,14 +141,15 @@ export async function POST(request: NextRequest) {
     )
 
     return NextResponse.json({
-      success: true,
-      response: aiResponse,
-      conversationId: currentConversationId,
-      contextUsed: context.length > 0,
-      sourcesCount: context.length,
-      fromKnowledgeBase: fromKnowledgeBase,
-      sourceCategories: sourceCategories.join(', ')
-    })
+  success: true,
+  response: aiResponse,
+  conversationId: currentConversationId,
+  // Use the actual values
+  contextUsed: context.length > 0,
+  sourcesCount: context.length,
+  sourceCategories: Array.from(new Set(sourceCategories)).join(', '),
+  fromKnowledgeBase: fromKnowledgeBase // Use the variable you already calculated
+})
 
   } catch (error) {
     console.error('Chat API error:', error)

@@ -7,6 +7,8 @@ from werkzeug.utils import secure_filename
 import PyPDF2
 from datetime import datetime
 import json
+import requests
+import base64
 
 app = Flask(__name__)
 CORS(app)
@@ -361,6 +363,79 @@ def delete_document(document_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/identify-plant', methods=['POST'])
+def identify_plant():
+    """Identify if an image contains a plant and get plant details"""
+    try:
+        # Get session info
+        auth_header = request.headers.get('Authorization', '')
+        session_id = auth_header.replace('Bearer ', '') if auth_header.startswith('Bearer ') else None
+        
+        if not session_id:
+            return jsonify({'success': False, 'error': 'No session token provided'}), 401
+        
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+            
+        # Check if the file is an image
+        allowed_image_types = {'jpg', 'jpeg', 'png'}
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        
+        if file_ext not in allowed_image_types:
+            return jsonify({'success': False, 'error': 'Not a valid image format'}), 400
+        
+        # Read the file
+        image_bytes = file.read()
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+        
+        # Call Plant.id API
+        api_key = os.environ.get('PLANTID_API_KEY')
+        if not api_key:
+            return jsonify({'success': False, 'error': 'Plant.id API key not configured'}), 500
+            
+        plant_id_url = 'https://api.plant.id/v2/identify'
+        payload = {
+            'images': [image_base64],
+            'modifiers': ['similar_images'],
+            'plant_details': ['common_names', 'url', 'wiki_description', 'taxonomy']
+        }
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'Api-Key': api_key
+        }
+        
+        response = requests.post(plant_id_url, json=payload, headers=headers)
+        result = response.json()
+        
+        # Check if it's a plant
+        is_plant = False
+        plant_details = {}
+        confidence = 0
+        
+        if result.get('suggestions') and len(result['suggestions']) > 0:
+            top_suggestion = result['suggestions'][0]
+            confidence = top_suggestion.get('probability', 0) * 100
+            
+        
+        return jsonify({
+            'success': True,
+            'is_plant': is_plant,
+            'plant_details': plant_details,
+            'confidence': confidence
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/")
+def home():
+    return "Flask backend is running!"
+
 if __name__ == '__main__':
     init_db()
     print("Flask server starting...")
@@ -371,4 +446,5 @@ if __name__ == '__main__':
     print("  GET  /documents - Get documents")
     print("  DELETE /documents/<id> - Delete document")
     print("  GET  /test-pdf - Test PDF processing")
+    print("  POST /identify-plant - Identify plant in image")
     app.run(debug=True, host='0.0.0.0', port=5000)

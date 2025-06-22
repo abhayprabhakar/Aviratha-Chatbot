@@ -188,9 +188,14 @@ formatIdentificationForLLM(result: PlantIdentificationResult, detailed: boolean 
 /**
  * Generates follow-up questions based on plant identification and health assessment
  */
-generateFollowUpQuestions(result: PlantIdentificationResult, userMessage?: string): string {
+public generateFollowUpQuestions(identificationResult: any, userMessage: string): string {
+  // First check if it's a plant
+  if (!identificationResult.is_plant) {
+    return ""; // Return empty string for non-plants
+  }
+  
   const questions: string[] = [];
-  const plantName = result.suggestions[0]?.plant_name || 'this plant';
+  const plantName = identificationResult.suggestions[0]?.plant_name || 'this plant';
   
   // Lowercase user message for easier comparison
   const lowerUserMessage = userMessage?.toLowerCase() || '';
@@ -222,7 +227,7 @@ generateFollowUpQuestions(result: PlantIdentificationResult, userMessage?: strin
   }
   
   // Add health-related questions if issues detected (unless already asked)
-  if (result.health_assessment && !result.health_assessment.is_healthy) {
+  if (identificationResult.health_assessment && !identificationResult.health_assessment.is_healthy) {
     const healthQuestion = `What should I do about the health issues detected in my ${plantName}?`;
     if (!isQuestionAsked(healthQuestion)) {
       questions.push(healthQuestion);
@@ -317,7 +322,7 @@ generateCustomResponse(result: PlantIdentificationResult, userQuery: string): st
       
       // List all health issues with their probabilities
       healthIssues.forEach((issue, index) => {
-        response += `**${index + 1}.** ${issue.name} (${(issue.probability * 100).toFixed(1)}% confidence)\n`;
+        response += `**${index + 1}**: ${issue.name} (${(issue.probability * 100).toFixed(1)}% confidence)\n`;
         
         // Add description if available and probability is significant
         if (issue.description && issue.probability > 0.15) {
