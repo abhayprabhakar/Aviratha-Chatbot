@@ -1,10 +1,6 @@
 'use client'
 
-<<<<<<< HEAD
-import { useState, useEffect, useRef } from 'react'
-=======
 import { useState, useEffect, useRef, useCallback } from 'react'
->>>>>>> feature-bug-fix
 import {
   Box,
   Container,
@@ -17,10 +13,7 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
-<<<<<<< HEAD
-=======
   ListItem,
->>>>>>> feature-bug-fix
   Card,
   CardContent,
   Avatar,
@@ -47,15 +40,10 @@ import {
   useMediaQuery,
   Zoom,
   Fade,
-<<<<<<< HEAD
-  Stack
-} from '@mui/material'
-=======
   Stack,
 } from '@mui/material'
 import Grid from '@mui/material/Grid';
 
->>>>>>> feature-bug-fix
 import {
   Send as SendIcon,
   SmartToy as BotIcon,
@@ -78,10 +66,7 @@ import {
 import { UserIdentificationService } from '@/lib/user-identification'
 import { CameraAlt as CameraIcon, FileUpload as FileUploadIcon } from '@mui/icons-material'
 import MarkdownRenderer from './MarkdownRenderer'
-<<<<<<< HEAD
-=======
 import AnimatedMessage from './AnimatedMessage'
->>>>>>> feature-bug-fix
 import { Clear as ClearIcon } from '@mui/icons-material';
 
 interface Message {
@@ -157,8 +142,6 @@ export default function ChatInterface() {
   const plantImageInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-<<<<<<< HEAD
-=======
   // Add this to your state declarations
   const [sourceDialogOpen, setSourceDialogOpen] = useState(false);
   const [currentSourceInfo, setCurrentSourceInfo] = useState<any>(null);
@@ -173,7 +156,6 @@ export default function ChatInterface() {
       return newSet;
     });
   }, []);
->>>>>>> feature-bug-fix
 
   useEffect(() => {
     initializeSession()
@@ -256,18 +238,6 @@ export default function ChatInterface() {
       console.error('Failed to load documents:', error)
     }
   }
-<<<<<<< HEAD
-
-  const loadConversation = async (conversationId: string) => {
-    if (!token) return
-    try {
-      const response = await fetch(`/api/conversations?id=${conversationId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await response.json()
-      if (data.success) {
-        // Add debug logging here
-=======
   const loadConversation = async (conversationId: string) => {
     if (!token) return;
     try {
@@ -276,16 +246,11 @@ export default function ChatInterface() {
       });
       const data = await response.json();
       if (data.success) {
->>>>>>> feature-bug-fix
         console.log("Loading conversation data:", data.messages.map((msg: any) => ({
           id: msg.id,
           role: msg.role,
           metadata: msg.metadata
         })));
-<<<<<<< HEAD
-        setMessages(data.messages)
-        setCurrentConversationId(conversationId)
-=======
         
         // Mark ALL messages from loaded conversations as history (no animations)
         // This applies to both regular and plant.id messages from past conversations
@@ -308,7 +273,6 @@ export default function ChatInterface() {
         
         setMessages(data.messages);
         setCurrentConversationId(conversationId);
->>>>>>> feature-bug-fix
       }
     } catch (error) {
       console.error('Failed to load conversation:', error)
@@ -369,24 +333,6 @@ export default function ChatInterface() {
           body: formData
         });
 
-<<<<<<< HEAD
-        const data = await response.json();
-
-        if (data.success) {
-          // Update conversation ID and reload conversation to show results
-          setCurrentConversationId(data.conversationId);
-          loadConversation(data.conversationId);
-          loadConversations(token);
-        } else {
-          console.error('Plant identification error:', data.error);
-          // Show error in chat
-          const errorMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: `Sorry, I couldn't identify the plant. Error: ${data.error || 'Unknown error'}`,
-            createdAt: new Date().toISOString()
-          };
-=======
         const data = await response.json();        if (data.success) {
           // Update conversation ID
           setCurrentConversationId(data.conversationId);
@@ -438,7 +384,6 @@ export default function ChatInterface() {
             createdAt: new Date().toISOString()
           };
             // Make sure this error message animates by NOT adding it to historyMessageIds
->>>>>>> feature-bug-fix
           setMessages(prev => [...prev, errorMessage]);
         }
       } else {
@@ -464,19 +409,12 @@ export default function ChatInterface() {
             })
           });
           
-<<<<<<< HEAD
-          const data = await response.json();
-          if (data.success) {
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-=======
           const data = await response.json();          if (data.success) {
             // Generate a unique ID for the message
             const messageId = (Date.now() + 1).toString();
             
             const assistantMessage: Message = {
               id: messageId,
->>>>>>> feature-bug-fix
               role: 'assistant',
               content: data.response,
               metadata: {
@@ -486,10 +424,7 @@ export default function ChatInterface() {
               createdAt: new Date().toISOString()
             };
             
-<<<<<<< HEAD
-=======
             // Add plant followup message without marking it as history to ensure animation
->>>>>>> feature-bug-fix
             setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage]);
             return;
           }
@@ -511,12 +446,7 @@ export default function ChatInterface() {
         });
 
         const data = await response.json();
-<<<<<<< HEAD
-        if (data.success) {
-          const assistantMessage: Message = {
-=======
         if (data.success) {          const assistantMessage: Message = {
->>>>>>> feature-bug-fix
             id: (Date.now() + 1).toString(),
             role: 'assistant',
             content: data.response,
@@ -528,12 +458,8 @@ export default function ChatInterface() {
             },
             createdAt: new Date().toISOString()
           };
-<<<<<<< HEAD
-          
-=======
             // Add new messages without marking them as history to ensure they animate
           console.log('Adding new assistant message with ID:', assistantMessage.id, '- Not marking as history');
->>>>>>> feature-bug-fix
           setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage]);
           setCurrentConversationId(data.conversationId);
           loadConversations(token);
@@ -545,18 +471,11 @@ export default function ChatInterface() {
       setIsLoading(false);
     }
   };
-<<<<<<< HEAD
-
-  const createNewConversation = () => {
-    setMessages([])
-    setCurrentConversationId(null)
-=======
   const createNewConversation = () => {
     setMessages([]);
     setCurrentConversationId(null);
     // Reset history message tracking for new conversations
     setHistoryMessageIds(new Set());
->>>>>>> feature-bug-fix
   }
 
   const deleteConversation = async (conversationId: string) => {
@@ -969,20 +888,12 @@ export default function ChatInterface() {
                                 />
                               ))}
                             </Box>
-<<<<<<< HEAD
-                          )}
-
-                          <MarkdownRenderer 
-                            content={message.content} 
-                            isUserMessage={message.role === 'user'}
-=======
                           )}                          <AnimatedMessage
                             content={message.content}
                             isUserMessage={message.role === 'user'}
                             isComplete={typedMessages.has(message.id)}
                             isHistoryMessage={historyMessageIds.has(message.id)}
                             onComplete={() => handleMessageTypingComplete(message.id)}
->>>>>>> feature-bug-fix
                           />
 
                           {/* Display image reference in assistant responses if relevant */}
@@ -1017,16 +928,6 @@ export default function ChatInterface() {
                               <Chip
                                 icon={<FileTextIcon />}
                                 label={message.metadata.fromKnowledgeBase 
-<<<<<<< HEAD
-                                  ? `From Hydroponics Knowledge Base (${message.metadata.sourceCategories})`
-                                  : `Used ${message.metadata.sourcesCount} knowledge sources`}
-                                size="small"
-                                color={message.metadata.fromKnowledgeBase ? "success" : "default"}
-                                variant="outlined"
-                                sx={{ 
-                                  color: message.role === 'user' ? 'white' : 'text.secondary',
-                                  borderColor: message.role === 'user' ? 'white' : 'divider'
-=======
                                   ? `From Hydroponics Knowledge Base (${
                                       message.metadata.sourceCategories 
                                         ? message.metadata.sourceCategories.split(',')[0] + 
@@ -1048,7 +949,6 @@ export default function ChatInterface() {
                                   color: message.role === 'user' ? 'white' : 'text.secondary',
                                   borderColor: message.role === 'user' ? 'white' : 'divider',
                                   cursor: 'pointer'
->>>>>>> feature-bug-fix
                                 }}
                               />
                             </Box>
@@ -1385,8 +1285,6 @@ export default function ChatInterface() {
           <Button onClick={() => setShowDocuments(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-<<<<<<< HEAD
-=======
 
       {/* Source Info Dialog */}
       <Dialog
@@ -1470,7 +1368,6 @@ export default function ChatInterface() {
           <Button onClick={() => setSourceDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
->>>>>>> feature-bug-fix
     </Box>
   )
 }

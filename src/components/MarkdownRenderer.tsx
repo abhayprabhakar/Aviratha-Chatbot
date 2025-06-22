@@ -1,10 +1,6 @@
 'use client'
 
-<<<<<<< HEAD
-import React from 'react'
-=======
 import React, { useMemo } from 'react'
->>>>>>> feature-bug-fix
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
@@ -26,11 +22,6 @@ import {
 interface MarkdownRendererProps {
   content: string
   isUserMessage?: boolean
-<<<<<<< HEAD
-}
-
-export default function MarkdownRenderer({ content, isUserMessage = false }: MarkdownRendererProps) {
-=======
   isAnimating?: boolean  // To show animation effects like cursor
 }
 
@@ -39,7 +30,6 @@ export default function MarkdownRenderer({
   isUserMessage = false, 
   isAnimating = false 
 }: MarkdownRendererProps) {
->>>>>>> feature-bug-fix
   const theme = useTheme()
 
   const components = {
@@ -223,18 +213,6 @@ export default function MarkdownRenderer({
         {children}
       </Typography>
     ),
-<<<<<<< HEAD
-  }
-
-  return (
-    <Box sx={{ width: '100%', '& > :first-of-type': { mt: 0 }, '& > :last-child': { mb: 0 } }}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        components={components}
-      >
-        {content}
-      </ReactMarkdown>
-=======
   }  // Ensure we always have content to render, even if it's just a non-breaking space
   const displayContent = content || "\u00A0"; // Use non-breaking space  // Use memo to prevent unnecessary re-renders
   const fullContent = useMemo(() => content || '\u00A0', [content]);
@@ -331,7 +309,6 @@ export default function MarkdownRenderer({
         </Box>
           {/* Removed cursor indicator as requested */}
       </Box>
->>>>>>> feature-bug-fix
     </Box>
   )
 }
