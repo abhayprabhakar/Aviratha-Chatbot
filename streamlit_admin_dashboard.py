@@ -17,7 +17,7 @@ except ImportError:
 
 # Try importing optional dependencies
 try:
-    import pycryptodome
+    import Crypto.Cipher
     HAS_PYCRYPTODOME = True
 except ImportError:
     HAS_PYCRYPTODOME = False
