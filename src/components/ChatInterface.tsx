@@ -1,6 +1,5 @@
 'use client'
-
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import {
   Box,
   Container,
@@ -43,6 +42,7 @@ import {
   Stack,
 } from '@mui/material'
 import Grid from '@mui/material/Grid';
+import { debounce } from 'lodash' // You'll need to install lodash: npm install lodash @types/lodash
 
 import {
   Send as SendIcon,
@@ -116,6 +116,151 @@ const defaultLLMConfig: LLMConfig = {
   maxTokens: 2000
 }
 
+// Replace the existing MessageItem component with this updated version:
+const MessageItem = memo(function MessageItem({ 
+  message, 
+  index, 
+  typedMessages, 
+  historyMessageIds, 
+  handleMessageTypingComplete,
+  theme,
+  setCurrentSourceInfo,
+  setSourceDialogOpen
+}: {
+  message: Message;
+  index: number;
+  typedMessages: Set<string>;
+  historyMessageIds: Set<string>;
+  handleMessageTypingComplete: (id: string) => void;
+  theme: any;
+  setCurrentSourceInfo: (info: any) => void;
+  setSourceDialogOpen: (open: boolean) => void;
+}) {
+  return (
+    <Fade in timeout={300} style={{ transitionDelay: `${index * 100}ms` }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: message.role === 'user' ? 'row-reverse' : 'row',
+          alignItems: 'flex-start',
+          gap: 2,
+        }}
+      >
+        <Avatar                        
+          sx={{
+            bgcolor: message.role === 'user' ? 'primary.main' : 'secondary.main',
+            background: message.role === 'user' 
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              : 'linear-gradient(135deg, #a8a8a8 0%, #7b7b7b 100%)',
+          }}
+        >
+          {message.role === 'user' ? <UserIcon /> : <BotIcon />}
+        </Avatar>
+        
+        <Card                        
+          sx={{
+            maxWidth: '70%',
+            background: message.role === 'user'
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              : theme.palette.background.paper,
+            color: message.role === 'user' ? 'white' : 'text.primary',
+          }}
+        >  
+          <CardContent>
+            {/* Display uploaded plant images if available */}
+            {message.role === 'user' && message.metadata?.type === 'plant_upload' && message.metadata.uploadedImages && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mb: 2 }}>
+                {message.metadata.uploadedImages.map((imagePath: string, i: number) => (
+                  <Box 
+                    key={i}
+                    component="img"
+                    src={imagePath}
+                    alt="Uploaded plant"
+                    sx={{
+                      width: '100%',
+                      maxHeight: 300,
+                      objectFit: 'contain',
+                      borderRadius: 2,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      mb: i < message.metadata.uploadedImages.length - 1 ? 1 : 0
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+            
+            <AnimatedMessage
+              content={message.content}
+              isUserMessage={message.role === 'user'}
+              isComplete={typedMessages.has(message.id)}
+              isHistoryMessage={historyMessageIds.has(message.id)}
+              onComplete={() => handleMessageTypingComplete(message.id)}
+            />
+
+            {/* Display image reference in assistant responses if relevant */}
+            {message.role === 'assistant' && 
+            message.metadata?.type === 'plant_identification' && 
+            message.metadata.plantData?.uploadedImages && (
+              <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1 }}>
+                  Analyzed plant image:
+                </Typography>
+                {message.metadata.plantData.uploadedImages.map((imagePath: string, i: number) => (
+                  <Box 
+                    key={i}
+                    component="img"
+                    src={imagePath}
+                    alt="Identified plant"
+                    sx={{
+                      maxWidth: '80%',
+                      maxHeight: 200,
+                      objectFit: 'contain',
+                      borderRadius: 2,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      opacity: 0.9,
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+            
+            {message.metadata?.contextUsed && (
+              <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                <Chip
+                  icon={<FileTextIcon />}
+                  label={message.metadata.fromKnowledgeBase 
+                    ? `From Hydroponics Knowledge Base (${
+                        message.metadata.sourceCategories 
+                          ? message.metadata.sourceCategories.split(',')[0] + 
+                            (message.metadata.sourceCategories.includes(',') ? ' & more' : '')
+                          : 'general knowledge'
+                      })`
+                    : `Used ${message.metadata.sourcesCount || '?'} knowledge sources`
+                  }
+                  size="small"
+                  color={message.metadata.fromKnowledgeBase ? "success" : "default"}
+                  variant="outlined"
+                  onClick={() => {
+                    console.log("Knowledge source metadata:", message.metadata);
+                    setCurrentSourceInfo(message.metadata);
+                    setSourceDialogOpen(true);
+                  }}
+                  clickable
+                  sx={{ 
+                    color: message.role === 'user' ? 'white' : 'text.secondary',
+                    borderColor: message.role === 'user' ? 'white' : 'divider',
+                    cursor: 'pointer'
+                  }}
+                />
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+    </Fade>
+  )
+})
+
 export default function ChatInterface() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
@@ -149,6 +294,7 @@ export default function ChatInterface() {
   // Track which messages were loaded from history (don't animate these)
   const [historyMessageIds, setHistoryMessageIds] = useState<Set<string>>(new Set())
   
+  // Memoize the message completion handler
   const handleMessageTypingComplete = useCallback((messageId: string) => {
     setTypedMessages(prev => {
       const newSet = new Set(prev);
@@ -156,6 +302,20 @@ export default function ChatInterface() {
       return newSet;
     });
   }, []);
+
+  // Memoize sorted messages to prevent re-sorting on every render
+  const sortedMessages = useMemo(() => 
+    messages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+    [messages]
+  )
+  
+  // Debounce the input change to reduce re-renders
+  const debouncedSetInputMessage = useMemo(
+    () => debounce((value: string) => {
+      setInputMessage(value)
+    }, 100),
+    []
+  )
 
   useEffect(() => {
     initializeSession()
@@ -837,126 +997,18 @@ export default function ChatInterface() {
               </Box>
             ) : (
               <Stack spacing={3} sx={{ pb: 2 }}>
-                {messages.map((message, index) => (
-                  <Fade in key={message.id} timeout={300} style={{ transitionDelay: `${index * 100}ms` }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: message.role === 'user' ? 'row-reverse' : 'row',
-                        alignItems: 'flex-start',
-                        gap: 2,
-                      }}
-                    >
-                      <Avatar                        
-                        sx={{
-                          bgcolor: message.role === 'user' ? 'primary.main' : 'secondary.main',
-                          background: message.role === 'user' 
-                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                            : 'linear-gradient(135deg, #a8a8a8 0%, #7b7b7b 100%)',
-                        }}
-                      >
-                        {message.role === 'user' ? <UserIcon /> : <BotIcon />}
-                      </Avatar>
-                      
-                      <Card                        
-                        sx={{
-                          maxWidth: '70%',
-                          background: message.role === 'user'
-                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                            : theme.palette.background.paper,
-                          color: message.role === 'user' ? 'white' : 'text.primary',
-                        }}
-                      >  
-                        <CardContent>                          
-                          {/* Display uploaded plant images if available */}
-                          {message.role === 'user' && message.metadata?.type === 'plant_upload' && message.metadata.uploadedImages && (
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mb: 2 }}>
-                              {message.metadata.uploadedImages.map((imagePath: string, i: number) => (
-                                <Box 
-                                  key={i}
-                                  component="img"
-                                  src={imagePath}
-                                  alt="Uploaded plant"
-                                  sx={{
-                                    width: '100%',
-                                    maxHeight: 300,
-                                    objectFit: 'contain',
-                                    borderRadius: 2,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                    mb: i < message.metadata.uploadedImages.length - 1 ? 1 : 0
-                                  }}
-                                />
-                              ))}
-                            </Box>
-                          )}                          <AnimatedMessage
-                            content={message.content}
-                            isUserMessage={message.role === 'user'}
-                            isComplete={typedMessages.has(message.id)}
-                            isHistoryMessage={historyMessageIds.has(message.id)}
-                            onComplete={() => handleMessageTypingComplete(message.id)}
-                          />
-
-                          {/* Display image reference in assistant responses if relevant */}
-                          {message.role === 'assistant' && 
-                          message.metadata?.type === 'plant_identification' && 
-                          message.metadata.plantData?.uploadedImages && (
-                            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1 }}>
-                                Analyzed plant image:
-                              </Typography>
-                              {message.metadata.plantData.uploadedImages.map((imagePath: string, i: number) => (
-                                <Box 
-                                  key={i}
-                                  component="img"
-                                  src={imagePath}
-                                  alt="Identified plant"
-                                  sx={{
-                                    maxWidth: '80%',
-                                    maxHeight: 200,
-                                    objectFit: 'contain',
-                                    borderRadius: 2,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                    opacity: 0.9,
-                                  }}
-                                />
-                              ))}
-                            </Box>
-                          )}
-                          
-                          {message.metadata?.contextUsed && (
-                            <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                              <Chip
-                                icon={<FileTextIcon />}
-                                label={message.metadata.fromKnowledgeBase 
-                                  ? `From Hydroponics Knowledge Base (${
-                                      message.metadata.sourceCategories 
-                                        ? message.metadata.sourceCategories.split(',')[0] + 
-                                          (message.metadata.sourceCategories.includes(',') ? ' & more' : '')
-                                        : 'general knowledge'
-                                    })`
-                                  : `Used ${message.metadata.sourcesCount || '?'} knowledge sources`
-                                }
-                                size="small"
-                                color={message.metadata.fromKnowledgeBase ? "success" : "default"}
-                                variant="outlined"
-                                onClick={() => {
-                                  console.log("Knowledge source metadata:", message.metadata);
-                                  setCurrentSourceInfo(message.metadata);
-                                  setSourceDialogOpen(true);
-                                }}
-                                clickable
-                                sx={{ 
-                                  color: message.role === 'user' ? 'white' : 'text.secondary',
-                                  borderColor: message.role === 'user' ? 'white' : 'divider',
-                                  cursor: 'pointer'
-                                }}
-                              />
-                            </Box>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </Box>
-                  </Fade>
+                {sortedMessages.map((message, index) => (
+                  <MessageItem
+                    key={message.id}
+                    message={message}
+                    index={index}
+                    typedMessages={typedMessages}
+                    historyMessageIds={historyMessageIds}
+                    handleMessageTypingComplete={handleMessageTypingComplete}
+                    theme={theme}
+                    setCurrentSourceInfo={setCurrentSourceInfo}
+                    setSourceDialogOpen={setSourceDialogOpen}
+                  />
                 ))}
                 
                 {isLoading && (
