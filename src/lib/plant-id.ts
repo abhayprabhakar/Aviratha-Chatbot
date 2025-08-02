@@ -322,7 +322,7 @@ generateCustomResponse(result: PlantIdentificationResult, userQuery: string): st
       
       // List all health issues with their probabilities
       healthIssues.forEach((issue, index) => {
-        response += `**${index + 1}**: ${issue.name} (${(issue.probability * 100).toFixed(1)}% confidence)\n`;
+        response += `**${index + 1}.** ${issue.name} (${(issue.probability * 100).toFixed(1)}% confidence)\n`;
         
         // Add description if available and probability is significant
         if (issue.description && issue.probability > 0.15) {
