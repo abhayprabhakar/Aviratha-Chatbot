@@ -1,5 +1,373 @@
 # Changelog
 
+```markdown
+## [1.3.0] - 2025-07-30
+
+### 🌱 Enhanced Hydroponics-Focused Topic Management
+
+This update introduces a comprehensive topic filtering system that ensures the Aviratha Chatbot remains strictly focused on hydroponics and plant cultivation topics while rejecting off-topic questions.
+
+### 🔧 Major Changes
+
+#### 1. Advanced Topic Classification System
+- **LLM-Based Topic Filtering**: Implemented intelligent classification using Gemini API to detect and filter off-topic questions
+- **Pattern Recognition Fallback**: Added robust regex pattern matching as a secondary filtering mechanism
+- **Multi-category Detection**: Created specialized detection for fiction, medical advice, controlled substances, and more
+- **Context-Aware Rejections**: Customized rejection messages based on the specific type of off-topic content
+
+#### 2. Content Type-Specific Filtering
+- **Fiction & Hypothetical Scenarios**: Added detection for fictional characters and scenarios, even when related to plants
+- **Medical/Health Content**: Prevented medical advice questions related to plants and hydroponics
+- **Dual-Purpose Questions**: Detected questions that try to sneak non-hydroponics topics alongside valid questions
+- **Controlled Substance Detection**: Added filtering for questions about growing controlled substances
+- **Plant Personification**: Prevented questions about plants having feelings, thoughts, or consciousness
+- **Personal Advice Filtering**: Blocked questions seeking personal advice that mention hydroponics
+
+#### 3. Enhanced System Prompts
+- **Strict Hydroponics Focus**: Strengthened system prompts to maintain focus exclusively on practical plant cultivation
+- **Clear Rejection Guidelines**: Added explicit instructions for handling off-topic questions
+- **Improved Response Formatting**: Enhanced rejection messages with context-specific explanations
+
+### 🔍 Detailed Technical Changes
+
+#### Topic Classification Implementation
+```typescript
+// LLM-based topic classifier
+async function classifyMessageTopic(message: string): Promise<boolean> {
+  // Comprehensive prompt-based classification with detailed rules
+  // Returns true for on-topic questions (hydroponics/plants), false for off-topic
+  
+  const classifierPrompt = `
+    TASK: You are a binary classifier that determines if a question is related to REAL-WORLD hydroponics/plant cultivation or not.
+    INPUT: "${message}"
+    
+    Rules:
+    - VALID topics: real-world hydroponics, actual plant growing, practical agriculture, factual farming, realistic gardening
+    - INVALID topics: 
+      * Anything not related to plants or agriculture
+      * FICTIONAL scenarios (e.g. superheroes, movie characters, fantasy beings growing plants)
+      * HYPOTHETICAL implausible situations
+      * Questions about NON-EXISTENT entities
+      
+    OUTPUT: Respond ONLY with "ON-TOPIC" if the question is about REAL-WORLD hydroponics/agriculture, or "OFF-TOPIC" otherwise.
+  `;
+  
+  // Classification logic...
+}
+```
+
+#### Fiction Detection Patterns
+```typescript
+// Fiction check
+const isFictionalQuery = /\b(superman|batman|spider[ -]?man|iron[ -]?man|thor|hulk|captain america|wonder woman|flash|aquaman|cyborg|green lantern|martian|justice league|avengers|x-men|fictional|fantasy|imaginary|superhero|super hero|super power|mythical|legendary|magical|wizard|witch|dragon|fairy|elf|dwarf|hobbit|jedi|sith|darth vader|luke skywalker|harry potter|gandalf|frodo|voldemort|dumbledore|naruto|goku|pokemon|mario|zelda|link)\b/i.test(message);
+```
+
+#### Medical Content Detection
+```typescript
+// Medical check
+const isMedicalQuery = /\b(cure|treat|heal|therapy|medicine|medical|disease|illness|remedy|symptoms)\b/i.test(message_lower);
+```
+
+#### Content-Specific Rejection Messages
+```typescript
+// Add specific context for different types of off-topic content
+if (isFictionalQuery) {
+  rejectionResponse += `I don't discuss fictional characters or hypothetical scenarios, even when related to plants or hydroponics. I focus only on real-world plant cultivation. `;
+} else if (isMedicalQuery) {
+  rejectionResponse += `I don't provide medical advice or discuss health claims related to plants. I focus on plant cultivation techniques only. `;
+} else if (isControlledSubstanceQuery) {
+  rejectionResponse += `I don't provide information about growing controlled substances. I focus on legal plant cultivation only. `;
+} 
+// Additional rejection types...
+```
+
+#### Pattern-Based Fallback System
+```typescript
+// Enhanced fallback check that specifically looks for fictional elements
+const message_lower = message.toLowerCase();
+
+// Explicitly check for fictional scenarios
+const fiction_indicators = [
+  // Fictional characters
+  'superman', 'batman', 'spider-man', 'spiderman', 'iron man', 'thor', 'hulk',
+  'wonder woman', 'captain america', 'flash', 'aquaman', 'cyborg', 'avengers',
+  // Additional patterns...
+];
+
+// If ANY fiction indicators are present, reject regardless of hydroponics terms
+if (fiction_indicators.some(term => message_lower.includes(term))) {
+  return false; // Not on topic - it's fictional
+}
+```
+
+### 🐛 Bug Fixes
+
+1. **Fixed Off-Topic Response Issue**: Resolved the problem where the chatbot would answer questions about fictional characters growing plants hydroponically
+   ```typescript
+   // Quick pre-filter for obviously fictional content
+   if (quickFictionCheck.test(message.toLowerCase())) {
+     console.log('Fiction check triggered: Rejecting query about fictional entities');
+     return false; // Immediately reject fictional content
+   }
+   ```
+
+2. **Fixed Dual-Purpose Question Handling**: Solved the issue where users could sneak off-topic questions by including hydroponics keywords
+   ```typescript
+   // Dual-purpose check
+   const isDualPurposeQuery = /\b(and also|as well as|while you're at it|besides that|additionally|on another note)\b/i.test(message_lower);
+   ```
+
+3. **Fixed Personification Questions**: Prevented questions about plants having feelings or consciousness
+   ```typescript
+   // Plant personification check
+   const isPersonificationQuery = /\b(plants|crops).+\b(feel|think|talk|say|opinion|emotions|sentient|consciousness)\b/i.test(message_lower);
+   ```
+
+4. **Fixed Medical Advice Loophole**: Closed gap where users could request medical advice related to plants
+   ```typescript
+   // Medical content with plant terms
+   /\b(cure|treat|heal|therapy|medicine|medical|disease|illness|remedy|symptoms)\b.+\b(hydropon|plant)\b/i,
+   /\b(hydropon|plant)\b.+\b(cure|treat|heal|therapy|medicine|medical|disease|illness|remedy|symptoms)\b/i,
+   ```
+
+5. **Enhanced System Prompt**: Fixed system prompt to be more explicit about topic boundaries
+   ```typescript
+   const systemPrompt = `You are a specialized hydroponics assistant focused EXCLUSIVELY on water-based plant cultivation.
+
+   EXTREMELY STRICT TOPIC POLICY:
+   - You will ONLY discuss hydroponics, plant growing, agriculture, or farming.
+   - You will NEVER answer questions about any other topics.
+   - For any question unrelated to plants, REPLY ONLY with the following message, verbatim:
+     "I'm specialized in hydroponics and plant cultivation. I'm not able to provide information about this topic..."`;
+   ```
+
+### 🧰 Technical Implementation Notes
+
+- Topic classifier uses Gemini 2.0 Flash model for efficient, low-latency classification
+- Classification system adds minimal overhead (typically <200ms) to response generation
+- Rejection patterns cover fiction, medical advice, controlled substances, dual-purpose questions, and personification
+- System maintains conversation context and session management for rejected queries
+- Custom rejection messages maintain a helpful, educational tone while enforcing topic boundaries
+
+### 📋 How to Use
+
+The topic filtering system operates automatically in the background:
+
+- **For hydroponics questions**: The chatbot responds normally, using the knowledge base when possible
+- **For agriculture-related questions**: The chatbot answers while relating back to hydroponics when relevant
+- **For off-topic questions**: The chatbot politely declines and suggests asking about hydroponics instead
+
+When receiving a rejection message, simply rephrase your question to focus on real-world hydroponics or plant cultivation topics.
+
+### 🚧 Known Issues
+- Some complex or technical hydroponics questions may occasionally be misclassified as off-topic
+- Very specific plant varieties might require additional context to be recognized as on-topic
+
+
+## [1.2.0] - 2025-06-22
+
+### 🪄 Enhanced User Experience Features
+
+This update significantly improves the user experience with optimized animations, better plant identification responses, and various UI/UX enhancements.
+
+### 🔧 Major Changes
+
+#### 1. Message Animation System Overhaul
+- **Selective Animation**: Messages now only animate during the current conversation, not when loading history
+- **Optimized Animation Speed**: Adjusted animation speed for better readability while maintaining the typing effect
+- **Consistent Sizing**: Fixed message containers to maintain consistent size during animations
+- **Plant.id Response Animation**: Added letter-by-letter animation to plant identification responses
+
+#### 2. Plant Identification Response Improvements
+- **Concise Plant Descriptions**: Shortened plant descriptions to 1-2 lines for better readability
+- **Optimized Response Format**: Limited descriptions to first sentences with proper length constraints
+- **Visual Consistency**: Improved formatting of plant identification results
+
+#### 3. Knowledge Base Visualization
+- **Streamlit Dashboard**: Added administrative dashboard for knowledge base exploration and analysis
+- **Document Statistics**: Visualization of document count, size, and reading time metrics
+- **Category Analysis**: Visual breakdown of knowledge base categories and document distribution
+
+### 🔍 Detailed Technical Changes
+
+#### Animation System Enhancements
+- **Fixed Animation Loops**: Resolved infinite animation loop with proper completion handling:
+  ```typescript
+  // Completion tracking to prevent multiple calls
+  const completionCalled = useRef(false);
+  ```
+- **Dynamic Animation Speed**: Added scaling animation speed based on content length:
+  ```typescript
+  const getOptimalCharsPerTick = (length: number) => {
+    return length > 500 ? 3 : 2;
+  };
+  ```
+- **Message History Tracking**: Improved history message identification with proper state management:
+  ```typescript
+  setHistoryMessageIds(new Set<string>(data.messages.map((msg: any) => msg.id)));
+  ```
+- **CSS Transitions**: Added smooth transition effects for message container sizing:
+  ```tsx
+  sx={{
+    transition: 'all 0.3s ease-in-out',
+    minHeight: isUserMessage ? '40px' : '100px',
+  }}
+  ```
+
+#### Plant.id Response Optimizations
+- **First Sentence Extraction**: Limited plant descriptions to be more concise:
+  ```typescript
+  const firstSentence = description.split(/[.!?]/)[0] + '.';
+  ```
+- **Length Constraints**: Added character limits for long descriptions:
+  ```typescript
+  const briefDescription = firstSentence.length > 150 
+    ? firstSentence.substring(0, 150) + '...' 
+    : firstSentence;
+  ```
+- **Fixed Response Format**: Standardized confidence score display with consistent decimal precision:
+  ```typescript
+  response += `This plant appears to be **${plantName}** (${(confidence * 100).toFixed(1)}% confidence).\n\n`;
+  ```
+
+#### Streamlit Administrative Dashboard
+- **Knowledge Base Analytics**: Added comprehensive dashboard for knowledge base exploration:
+  ```python
+  # Knowledge Base Summary Stats
+  st.header("📊 Knowledge Base Statistics")
+  col1, col2, col3, col4 = st.columns(4)
+  
+  with col1:
+      st.metric("Total Documents", len(df))
+  with col2:
+      total_size_mb = round(df["fileSize"].sum() / (1024 * 1024), 2)
+      st.metric("Total Size", f"{total_size_mb} MB")
+  ```
+- **PDF Extraction**: Enhanced PDF text extraction with robust error handling:
+  ```python
+  def extract_pdf_text(file_path):
+      try:
+          with open(file_path, "rb") as file:
+              reader = PyPDF2.PdfReader(file)
+              # Check if PDF is encrypted
+              if reader.is_encrypted:
+                  return "[This PDF is encrypted and cannot be read without a password]"
+      # Error handling for various PDF issues
+      except Exception as e:
+          error_msg = str(e)
+          if "PyCryptodome" in error_msg:
+              return "[Error: This PDF requires PyCryptodome library]"
+  ```
+- **Document Explorer**: Added filtering and preview functionality for knowledge base documents:
+  ```python
+  # Document explorer with filtering
+  st.header("🔍 Document Explorer")
+  
+  # Filter controls
+  col1, col2 = st.columns(2)
+  
+  with col1:
+      selected_category = st.selectbox(
+          "Filter by Category",
+          options=["All Categories"] + sorted(df["category"].unique().tolist())
+      )
+  ```
+
+### 🐛 Bug Fixes
+
+1. **Fixed Infinite Animation Loop**: Resolved issue where message animation would repeat indefinitely
+   ```typescript
+   // Added completion tracking to prevent multiple calls
+   if (isFinished && !completionCalled.current) {
+     completionCalled.current = true;
+     onComplete();
+   }
+   ```
+
+2. **Fixed Message Container Sizing**: Solved problem where message boxes would continuously resize during animation
+   ```tsx
+   // Added placeholder element to pre-calculate full content size
+   {!isUserMessage && (
+     <Box 
+       sx={{
+         position: 'absolute',
+         visibility: 'hidden',
+         opacity: 0,
+       }}
+       aria-hidden="true"
+       className="message-placeholder"
+     />
+   )}
+   ```
+
+3. **Fixed Plant.id Animation**: Fixed issue where plant identification responses weren't animating properly
+   ```typescript
+   // Updated plant message detection
+   const isPlantMessage = content.includes('Plant Identification Results') || 
+                          content.includes('Plant Health Assessment') ||
+                          content.includes('Plant Details') ||
+                          content.includes('Growing Requirements');
+   ```
+
+4. **Fixed Streamlit Dashboard Errors**: Resolved issues with the knowledge base dashboard:
+   ```python
+   # Added proper error handling for PDF extraction
+   try:
+       with open(file_path, "rb") as file:
+           reader = PyPDF2.PdfReader(file)
+   except PyPDF2.errors.PdfReadError:
+       return "[Error: This PDF appears to be damaged or uses unsupported features]"
+   ```
+   
+5. **Fixed PyCryptodome Dependency Error**: Added proper dependency handling for encrypted PDFs
+   ```python
+   # Install command added to documentation
+   pip install pycryptodome
+   ```
+
+### 🛠️ Technical Implementation Notes
+
+- Animation timing adjusted to 30ms delay between animation steps
+- Characters per animation tick scaled from 2-3 based on message length
+- Message history tracking implemented using React useState and Set data structure
+- Plant.id response animations synchronized with Gemini response animations
+- Streamlit dashboard optimized with st.cache_data for performance
+- PDF text extraction improved with multi-layered error handling
+
+### 📋 How to Use New Features
+
+#### Message Animations
+- Animations now only appear for new messages in the current conversation
+- Previously loaded messages (from history) appear instantly without animation
+- Both Gemini and Plant.id responses now use consistent animation speed and styling
+
+#### Knowledge Base Dashboard
+1. **Start the dashboard**
+   ```bash
+   streamlit run streamlit_admin_dashboard.py
+   ```
+2. **Explore knowledge base statistics**:
+   - View document counts, sizes, and reading times
+   - Filter documents by category
+   - Search for specific document names
+   - Preview document contents
+
+### 🚧 Known Issues
+- Some PDF files with complex encryption may still require additional libraries
+- Very large PDF files might cause performance issues with the Streamlit dashboard
+```
+
+This comprehensive changelog documents all the changes you've made, including:
+- The message animation improvements
+- Plant.id response optimization
+- Streamlit dashboard implementation
+- Bug fixes and technical implementations
+- Usage instructions for new features
+
+The format follows your existing changelog style while adding detailed technical information about the changes.
+
+
+
 ## [1.1.0] - 2025-06-19
 
 ### 🌿 Enhanced Plant Identification Features
