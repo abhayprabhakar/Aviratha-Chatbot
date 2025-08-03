@@ -1,4 +1,5 @@
 'use client'
+import NoSSR from './NoSSR'
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import {
   Box,
@@ -385,6 +386,55 @@ export default function ChatInterface() {
     }
   }
 
+  const exportConversation = () => {
+    if (messages.length === 0) {
+      alert('No messages to export');
+      return;
+    }
+
+    // Create export data
+    const exportData = {
+      title: currentConversationId ? `Hydroponics Chat - ${new Date().toLocaleDateString()}` : 'Hydroponics Chat',
+      exportDate: new Date().toISOString(),
+      messageCount: messages.length,
+      messages: messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.createdAt,
+        hasPlantImage: msg.metadata?.type === 'plant_upload' || msg.metadata?.type === 'plant_identification'
+      }))
+    };
+
+    // Convert to formatted text
+    const exportText = `Hydroponics AI Chat Export
+  Generated: ${new Date().toLocaleString()}
+  Messages: ${messages.length}
+
+  ${'-'.repeat(50)}
+
+  ${messages.map(msg => {
+      const timestamp = new Date(msg.createdAt).toLocaleString();
+      const role = msg.role === 'user' ? 'You' : 'AI Assistant';
+      const plantIndicator = msg.metadata?.type === 'plant_upload' || msg.metadata?.type === 'plant_identification' ? ' 🌱' : '';
+      
+      return `[${timestamp}] ${role}${plantIndicator}:\n${msg.content}\n`;
+    }).join('\n')}
+
+  ${'-'.repeat(50)}
+  Exported from Hydroponics AI Assistant`;
+
+    // Create and download file
+    const blob = new Blob([exportText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hydroponics-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const loadDocuments = async (authToken: string) => {
     try {
       const response = await fetch('/api/upload', {
@@ -729,6 +779,20 @@ export default function ChatInterface() {
   }
 
   return (
+        <NoSSR fallback={
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          height: '100vh',
+          backgroundColor: '#0a0a0a',
+          color: '#ffffff'
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    }>
     <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
       {/* Mobile App Bar */}
       {isMobile && (
@@ -860,15 +924,14 @@ export default function ChatInterface() {
             <Button
               fullWidth
               variant="outlined"
-              startIcon={<FileTextIcon />}
-              onClick={() => setShowDocuments(true)}
+              startIcon={<FileUploadIcon />}
+              onClick={exportConversation}
+              disabled={messages.length === 0}
               sx={{ justifyContent: 'flex-start' }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                <span>Knowledge Base</span>
-                <Badge badgeContent={documents.length} color="primary" sx={{ ml: 'auto' }} />
-              </Box>
-            </Button>            <Button
+              Export Chat
+            </Button>          
+            <Button
               fullWidth
               variant="outlined"
               startIcon={<SettingsIcon />}
@@ -1421,5 +1484,6 @@ export default function ChatInterface() {
         </DialogActions>
       </Dialog>
     </Box>
+  </NoSSR>
   )
 }
