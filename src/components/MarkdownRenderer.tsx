@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, memo } from 'react'
+import React, { useMemo, memo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
@@ -16,13 +16,18 @@ import {
   TableRow,
   Link,
   Divider,
+  Button,
+  CircularProgress,
   useTheme
 } from '@mui/material'
+import { Summarize, ExpandMore } from '@mui/icons-material'
 
 interface MarkdownRendererProps {
   content: string
   isUserMessage?: boolean
   isAnimating?: boolean
+  messageId?: string
+  conversationId?: string
 }
 
 // Move components creation outside to prevent recreation on every render
@@ -199,9 +204,14 @@ const createMarkdownComponents = (isUserMessage: boolean, theme: any) => ({
 const MarkdownRenderer = memo(function MarkdownRenderer({ 
   content, 
   isUserMessage = false, 
-  isAnimating = false 
+  isAnimating = false,
+  messageId,
+  conversationId
 }: MarkdownRendererProps) {
   const theme = useTheme()
+  const [isLoading, setIsLoading] = useState(false)
+  const [summary, setSummary] = useState<string | null>(null)
+  const [showSummary, setShowSummary] = useState(false)
 
   // Memoize components to prevent recreation on every render
   const components = useMemo(() => 
@@ -209,19 +219,60 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
     [isUserMessage, theme.palette.mode]
   )
 
-  // Memoize content processing
-  const displayContent = useMemo(() => content || '\u00A0', [content])
+  // Only show summarize button for assistant messages that are complete and long enough
+  const shouldShowSummarizeButton = useMemo(() => {
+    return !isUserMessage && 
+           !isAnimating && 
+           content && 
+           content.length > 300 && // Only show for longer messages
+           !content.includes('I\'m specialized in hydroponics') // Don't show for rejection messages
+  }, [isUserMessage, isAnimating, content])
 
-  // Memoize cursor style
-  const cursorStyle = useMemo(() => ({
-    display: 'inline-block',
-    width: '0.5em',
-    height: '1em',
-    backgroundColor: theme.palette.mode === 'dark' ? '#fff' : '#000',
-    animation: 'blink 1s step-end infinite',
-    verticalAlign: 'text-bottom',
-    marginLeft: '2px',
-  }), [theme.palette.mode])
+  // Handle summarization
+  const handleSummarize = async () => {
+    if (!summary) {
+      setIsLoading(true)
+      try {
+        const token = localStorage.getItem('sessionToken')
+        const response = await fetch('/api/chat/summarize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            content,
+            conversationId,
+            messageId
+          })
+        })
+
+        const data = await response.json()
+        
+        if (data.success) {
+          setSummary(data.summary)
+          setShowSummary(true)
+        } else {
+          console.error('Summarization failed:', data.error)
+        }
+      } catch (error) {
+        console.error('Summarization error:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      // Toggle between summary and full content
+      setShowSummary(!showSummary)
+    }
+  }
+
+  // Memoize content processing
+  const displayContent = useMemo(() => {
+    if (showSummary && summary) {
+      return summary
+    }
+    return content || '\u00A0'
+  }, [content, summary, showSummary])
 
   // Memoize the full content for placeholder
   const fullContent = useMemo(() => content || '\u00A0', [content])
@@ -292,11 +343,11 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
           height: '100%',
           zIndex: 1,
           display: 'flex',
-          flexDirection: 'row',
+          flexDirection: 'column',
           alignItems: 'flex-start',
         }}
       >
-        <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ flexGrow: 1, width: '100%' }}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm, remarkBreaks]}
             components={components}
@@ -304,6 +355,40 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
             {displayContent}
           </ReactMarkdown>
         </Box>
+        
+        {/* Summarize/Expand Button */}
+        {shouldShowSummarizeButton && (
+          <Box sx={{ mt: 1, alignSelf: 'flex-end' }}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleSummarize}
+              disabled={isLoading}
+              startIcon={
+                isLoading ? (
+                  <CircularProgress size={16} />
+                ) : showSummary ? (
+                  <ExpandMore />
+                ) : (
+                  <Summarize />
+                )
+              }
+              sx={{
+                fontSize: '0.75rem',
+                padding: '4px 8px',
+                minHeight: 'auto',
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
+                '&:hover': {
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                }
+              }}
+            >
+              {isLoading ? 'Summarizing...' : showSummary ? 'Show Full' : 'Summarize'}
+            </Button>
+          </Box>
+        )}
       </Box>
     </Box>
   )

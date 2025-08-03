@@ -7,6 +7,8 @@ export interface AnimatedMessageProps {
   isComplete: boolean;
   onComplete: () => void;
   isHistoryMessage?: boolean;
+  messageId?: string;
+  conversationId?: string;
 }
 
 interface TypingState {
@@ -30,7 +32,9 @@ const AnimatedMessage = memo(function AnimatedMessage({
   isUserMessage, 
   isComplete, 
   onComplete,
-  isHistoryMessage = false
+  isHistoryMessage = false,
+  messageId,
+  conversationId
 }: AnimatedMessageProps) {
   
   // Memoize expensive calculations
@@ -126,6 +130,8 @@ const AnimatedMessage = memo(function AnimatedMessage({
       content={typingState.content} 
       isUserMessage={isUserMessage}
       isAnimating={typingState.isTyping}
+      messageId={messageId}
+      conversationId={conversationId}
     />
   );
 })
