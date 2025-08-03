@@ -2,7 +2,7 @@
 
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
 import { CssBaseline } from '@mui/material'
-import { ReactNode } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 
 const theme = createTheme({
   palette: {
@@ -99,6 +99,26 @@ interface ThemeProviderProps {
 }
 
 export default function ThemeProvider({ children }: ThemeProviderProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Prevent hydration mismatch by showing fallback during SSR
+  if (!mounted) {
+    return (
+      <div style={{ 
+        backgroundColor: '#0a0a0a', 
+        color: '#ffffff', 
+        minHeight: '100vh',
+        fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif'
+      }}>
+        {children}
+      </div>
+    )
+  }
+
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />

@@ -1,4 +1,5 @@
 'use client'
+import NoSSR from './NoSSR'
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import {
   Box,
@@ -729,6 +730,20 @@ export default function ChatInterface() {
   }
 
   return (
+        <NoSSR fallback={
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          height: '100vh',
+          backgroundColor: '#0a0a0a',
+          color: '#ffffff'
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    }>
     <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
       {/* Mobile App Bar */}
       {isMobile && (
@@ -1421,5 +1436,6 @@ export default function ChatInterface() {
         </DialogActions>
       </Dialog>
     </Box>
+  </NoSSR>
   )
 }
