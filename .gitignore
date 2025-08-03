@@ -55,6 +55,14 @@ yarn-error.log*
 /knowledge-base
 /public/uploaded-plants/*
 
+# Plant images - keep directory structure but ignore uploaded files
+/public/plant-images/*
+!/public/plant-images/.gitkeep
+
+# Temporary upload directories
+/uploads/temp/*
+!/uploads/temp/.gitkeep
+
 # Keep the uploaded plants directory but ignore its contents
 !/public/uploaded-plants/
 !/public/uploaded-plants/.gitkeep
