@@ -171,22 +171,57 @@ const MessageItem = memo(function MessageItem({
             {/* Display uploaded plant images if available */}
             {message.role === 'user' && message.metadata?.type === 'plant_upload' && message.metadata.uploadedImages && (
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mb: 2 }}>
-                {message.metadata.uploadedImages.map((imagePath: string, i: number) => (
-                  <Box 
-                    key={i}
-                    component="img"
-                    src={imagePath}
-                    alt="Uploaded plant"
-                    sx={{
-                      width: '100%',
-                      maxHeight: 300,
-                      objectFit: 'contain',
-                      borderRadius: 2,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      mb: i < message.metadata.uploadedImages.length - 1 ? 1 : 0
-                    }}
-                  />
-                ))}
+                {message.metadata.uploadedImages.map((imagePath: string, i: number) => {
+                  return (
+                    <Box 
+                      key={i}
+                      component="img"
+                      src={imagePath}
+                      alt="Uploaded plant"
+                      onError={(e) => {
+                        console.error('Failed to load image:', imagePath);
+                        const target = e.currentTarget as HTMLImageElement;
+                        // If blob URL fails, show a placeholder
+                        if (imagePath.startsWith('blob:')) {
+                          target.style.display = 'none';
+                          const placeholder = document.createElement('div');
+                          placeholder.style.cssText = `
+                            width: 100%;
+                            max-height: 150px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background-color: rgba(102, 126, 234, 0.1);
+                            border: 2px dashed rgba(102, 126, 234, 0.3);
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin-bottom: ${i < message.metadata.uploadedImages.length - 1 ? '8px' : '0'};
+                            flex-direction: column;
+                            gap: 8px;
+                            font-family: inherit;
+                          `;
+                          placeholder.innerHTML = `
+                            <div style="font-size: 2rem;">🌱</div>
+                            <div style="font-weight: 500; color: #667eea;">Plant image uploaded</div>
+                            <div style="font-size: 12px; color: #666; text-align: center;">Image is being processed for identification</div>
+                          `;
+                          target.parentNode?.insertBefore(placeholder, target);
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', imagePath);
+                      }}
+                      sx={{
+                        width: '100%',
+                        maxHeight: 300,
+                        objectFit: 'contain',
+                        borderRadius: 2,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        mb: i < message.metadata.uploadedImages.length - 1 ? 1 : 0
+                      }}
+                    />
+                  );
+                })}
               </Box>
             )}
             
@@ -490,6 +525,8 @@ export default function ChatInterface() {
   }
 
   // Update the sendMessage function to handle image uploads
+// Around line 620-650, replace the beginning of the sendMessage function with this:
+
   const sendMessage = async () => {
     // Don't send empty messages unless there's an image
     if ((!inputMessage.trim() && !imagePreview) || isLoading || !token) return;
@@ -500,112 +537,125 @@ export default function ChatInterface() {
     // Clear input field
     setInputMessage('');
     
-    // Add temporary message to UI
+    // Store image preview before clearing it
+    const currentImagePreview = imagePreview;
+    
+    // Clear image preview IMMEDIATELY when send is clicked
+    setImagePreview(null);
+    
+    // Add temporary message to UI with image preview
     const tempMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: userMessage,
+      metadata: currentImagePreview ? {
+        type: 'plant_upload',
+        uploadedImages: [currentImagePreview.previewUrl], // Keep blob URL for immediate display
+        timestamp: new Date().toISOString(),
+        isTemporary: true
+      } : undefined,
       createdAt: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempMessage]);
     setIsLoading(true);
-    
-    // Store image preview before clearing it (in case we need to reference it in the try/catch)
-    const currentImagePreview = imagePreview;
-    
-    // Clear image preview immediately after sending
-    if (imagePreview) {
-      removeImagePreview();
-    }
 
     try {
-      // If we had an image, upload it for plant identification
       if (currentImagePreview) {
         const formData = new FormData();
-        
-        // Add the file
         formData.append('files', currentImagePreview.file);
-        
-        // Add the user's message
         formData.append('userMessage', userMessage);
-        
-        // Add conversation ID if available
         if (currentConversationId) {
           formData.append('conversationId', currentConversationId);
         }
         
-        // Upload and identify the plant
         const response = await fetch('/api/plant/identify', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
+          headers: { 'Authorization': `Bearer ${token}` },
           body: formData
         });
 
-        const data = await response.json();        if (data.success) {
-          // Update conversation ID
+        const data = await response.json();
+        
+        if (data.success) {
           setCurrentConversationId(data.conversationId);
           
-          // Instead of just reloading the conversation (which would mark everything as history),
-          // We'll load it but keep track of the Plant.id message so it can animate
-          const response = await fetch(`/api/conversations?id=${data.conversationId}`, {
+          // Load the conversation to get updated messages with proper server image URLs
+          const convResponse = await fetch(`/api/conversations?id=${data.conversationId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           
-          const convData = await response.json();
-          
+          const convData = await convResponse.json();
           if (convData.success) {
-            // Find the plant identification message
+            // Find the plant identification message for animation
             const plantMessage = convData.messages.find((msg: any) => 
               msg.metadata?.type === 'plant_identification'
             );
             
-            // Set all messages
-            setMessages(convData.messages);
+            // Replace the temporary message with server data, but keep displaying the blob URL
+            // until the server URL is confirmed working
+            const updatedMessages = convData.messages.map((msg: any) => {
+              if (msg.role === 'user' && msg.metadata?.type === 'plant_upload') {
+                // Try to use server URL first, fallback to blob URL
+                const serverImages = msg.metadata.uploadedImages || [];
+                const displayImages = serverImages.length > 0 ? serverImages : [currentImagePreview.previewUrl];
+                
+                return {
+                  ...msg,
+                  metadata: {
+                    ...msg.metadata,
+                    uploadedImages: displayImages,
+                    hasServerImages: serverImages.length > 0
+                  }
+                };
+              }
+              return msg;
+            });
+            
+            setMessages(updatedMessages);
             
             // Mark all messages EXCEPT the plant ID message as history
             if (plantMessage) {
-              console.log('Ensuring Plant.id message will animate:', plantMessage.id);              setHistoryMessageIds(new Set(
+              console.log('Plant.id message will animate:', plantMessage.id);
+              setHistoryMessageIds(new Set(
                 convData.messages
                   .filter((msg: any) => msg.id !== plantMessage.id)
                   .map((msg: any) => msg.id)
               ));
-            } else {              // No plant message found, mark all as history
+            } else {
               setHistoryMessageIds(new Set(
                 convData.messages.map((msg: any) => msg.id)
               ));
             }
           }
           
-          // Still update the conversation list
           loadConversations(token);
-        }else {
+        } else {
           console.error('Plant identification error:', data.error);
-          // Show error in chat
           const errorId = (Date.now() + 1).toString();
           const errorMessage: Message = {
             id: errorId,
             role: 'assistant',
             content: `Sorry, I couldn't identify the plant. Error: ${data.error || 'Unknown error'}`,
-            metadata: {
-              type: 'plant_error'
-            },
+            metadata: { type: 'plant_error' },
             createdAt: new Date().toISOString()
           };
-            // Make sure this error message animates by NOT adding it to historyMessageIds
           setMessages(prev => [...prev, errorMessage]);
         }
+        
+        // Clean up the blob URL after processing
+        setTimeout(() => {
+          if (currentImagePreview) {
+            URL.revokeObjectURL(currentImagePreview.previewUrl);
+          }
+        }, 5000); // Give 5 seconds for server images to load
+        
       } else {
-        // Regular chat message (no image)
-        // Check if this is following a plant identification
+        // Regular chat message handling (unchanged)
         const hasRecentPlantIdentification = messages.some(
           msg => msg.metadata?.type === 'plant_identification' && 
-          // Only consider recent messages (last 5)
           messages.indexOf(msg) > messages.length - 6
         );
         
-        // If this is a plant follow-up question, use the specialized endpoint
         if (hasRecentPlantIdentification && currentConversationId) {
           const response = await fetch('/api/chat/plant-followup', {
             method: 'POST',
@@ -619,10 +669,9 @@ export default function ChatInterface() {
             })
           });
           
-          const data = await response.json();          if (data.success) {
-            // Generate a unique ID for the message
+          const data = await response.json();
+          if (data.success) {
             const messageId = (Date.now() + 1).toString();
-            
             const assistantMessage: Message = {
               id: messageId,
               role: 'assistant',
@@ -633,14 +682,11 @@ export default function ChatInterface() {
               },
               createdAt: new Date().toISOString()
             };
-            
-            // Add plant followup message without marking it as history to ensure animation
             setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage]);
             return;
           }
         }
         
-        // Use regular chat endpoint
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: {
@@ -656,7 +702,8 @@ export default function ChatInterface() {
         });
 
         const data = await response.json();
-        if (data.success) {          const assistantMessage: Message = {
+        if (data.success) {
+          const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
             content: data.response,
@@ -668,7 +715,6 @@ export default function ChatInterface() {
             },
             createdAt: new Date().toISOString()
           };
-            // Add new messages without marking them as history to ensure they animate
           console.log('Adding new assistant message with ID:', assistantMessage.id, '- Not marking as history');
           setMessages(prev => [...prev.slice(0, -1), tempMessage, assistantMessage]);
           setCurrentConversationId(data.conversationId);
@@ -677,6 +723,10 @@ export default function ChatInterface() {
       }
     } catch (error) {
       console.error('Message send error:', error);
+      // Clean up on error
+      if (currentImagePreview) {
+        URL.revokeObjectURL(currentImagePreview.previewUrl);
+      }
     } finally {
       setIsLoading(false);
     }
