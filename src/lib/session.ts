@@ -142,7 +142,7 @@ export class SessionService {
     const conversation = await prisma.conversation.create({
       data: {
         sessionId,
-        title: title || `Conversation ${new Date().toLocaleDateString()}`
+        title: title || null
       }
     })
 

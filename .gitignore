@@ -59,6 +59,20 @@ yarn-error.log*
 /public/plant-images/*
 !/public/plant-images/.gitkeep
 
+# Conversation exports (user-generated files)
+*.txt
+chat_trails.txt
+*chat-export*.txt
+hydroponics-chat-*.txt
+
+# Development/Testing files
+test-conversations/
+debug-titles/
+conversation-exports/
+
+# Temporary title generation logs
+title-generation-*.log
+
 # Temporary upload directories
 /uploads/temp/*
 !/uploads/temp/.gitkeep

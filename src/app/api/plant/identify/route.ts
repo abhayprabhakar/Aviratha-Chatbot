@@ -175,6 +175,27 @@ export async function POST(request: NextRequest) {
       }
     } as any);
 
+    // Trigger title generation for plant identification conversations - ONLY if no title exists
+    try {
+      const messages = await sessionService.getConversationMessages(currentConversationId, session.sessionId)
+      
+      // Check if conversation already has a title
+      const conversations = await sessionService.getConversations(session.sessionId);
+      const currentConv = conversations.find(conv => conv.id === currentConversationId);
+      
+      // Only generate title if no title exists yet
+      if (!currentConv?.title && messages.length >= 2) {
+        const plantName = identificationResult.suggestions[0]?.plant_name || 'Unknown Plant'
+        const generatedTitle = `${plantName} Identification`
+        console.log(`Generating plant ID title: "${generatedTitle}" for conversation ${currentConversationId}`)
+        await sessionService.updateConversationTitle(currentConversationId, session.sessionId, generatedTitle)
+      } else if (currentConv?.title) {
+        console.log(`Conversation already has title: "${currentConv.title}" - not overwriting`)
+      }
+    } catch (error) {
+      console.warn('Plant ID title generation failed:', error)
+    }
+
     return NextResponse.json({
       success: true,
       identificationResult,
