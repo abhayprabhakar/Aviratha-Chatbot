@@ -65,6 +65,23 @@ export async function POST(request: NextRequest) {
       
       // Detect specific types of off-topic content
       const message_lower = message.toLowerCase();
+
+      if (/\b(hello|hi|hey|greetings|good morning|good afternoon)\b/i.test(message_lower)) {
+        rejectionResponse = `Hello! I'm your hydroponics assistant. I'd love to help you with questions about growing plants in water-based systems, nutrient solutions, plant health, or any agricultural topics. What would you like to know about hydroponics?`;
+      } else if (/\b(what.*can.*you|what.*do.*you|who.*are.*you|tell.*about.*yourself)\b/i.test(message_lower)) {
+        rejectionResponse = `I'm a specialized AI assistant focused on hydroponics and plant cultivation. I can help you with:
+
+• Plant growing techniques and systems (DWC, NFT, Aeroponics, etc.)
+• Nutrient solutions and pH management
+• Plant health and troubleshooting
+• Lighting and environmental controls
+• Crop selection and cultivation tips
+• System setup and maintenance
+
+What hydroponic topic would you like to explore?`;
+      } else {
+        rejectionResponse = `I specialize in hydroponics and plant cultivation. While I can't help with that particular topic, I'd be happy to answer questions about growing plants in water-based systems, nutrient solutions, plant health, or related agricultural topics. Is there anything about hydroponics you'd like to know?`;
+      }
       
       // Fiction check
       const isFictionalQuery = /\b(superman|batman|spider[ -]?man|iron[ -]?man|thor|hulk|captain america|wonder woman|flash|aquaman|cyborg|green lantern|martian|justice league|avengers|x-men|fictional|fantasy|imaginary|superhero|super hero|super power|mythical|legendary|magical|wizard|witch|dragon|fairy|elf|dwarf|hobbit|jedi|sith|darth vader|luke skywalker|harry potter|gandalf|frodo|voldemort|dumbledore|naruto|goku|pokemon|mario|zelda|link)\b/i.test(message);
@@ -220,6 +237,11 @@ export async function POST(request: NextRequest) {
         timestamp: new Date().toISOString()
       } as any // Add this type assertion
     )
+    
+    // Trigger title generation for new conversations
+    if (token) {
+      await triggerTitleGeneration(currentConversationId, token)
+    }
 
     return NextResponse.json({
       success: true,
@@ -311,138 +333,133 @@ function isOffTopicQuestion(message: string): boolean {
 
 async function classifyMessageTopic(message: string): Promise<boolean> {
   try {
-    // 1. FIRST-PASS BLOCKLIST: Immediately reject obvious problematic content
-    const quickRejectPatterns = [
-      // Fiction characters (existing check)
-      /\b(superman|batman|spider[ -]?man|iron[ -]?man|thor|hulk|captain america|wonder woman|flash|aquaman|cyborg|green lantern|martian|justice league|avengers|x-men|fictional|fantasy|imaginary|superhero|super hero|super power|mythical|legendary|magical|wizard|witch|dragon|fairy|elf|dwarf|hobbit|jedi|sith|darth vader|luke skywalker|harry potter|gandalf|frodo|voldemort|dumbledore|naruto|goku|pokemon|mario|zelda|link)\b/i,
-      
-      // Dual-purpose questions
-      /\b(hydropon|plant|grow).+\b(and also|while you're at it|besides that|additionally|on another note)\b/i,
-      /\b(hydropon|plant|grow).+\b(can you also|plus|as well as|along with)\b.+\b(tell me about|explain|what is|how to)\b/i,
-      
-      // Plant personification
-      /\b(plants|crops).+\b(feel|think|talk|say|opinion|emotions|sentient|consciousness)\b/i,
-      
-      // Medical claims
-      /\b(cure|treat|heal|therapy|medicine|medical|disease|illness|remedy|symptoms)\b.+\b(hydropon|plant)\b/i,
-      /\b(hydropon|plant)\b.+\b(cure|treat|heal|therapy|medicine|medical|disease|illness|remedy|symptoms)\b/i,
-      
-      // Controlled substances
-      /\b(thc|cannabis|marijuana|weed|pot|cocaine|heroin|psychedelic|mushroom|psilocybin|lsd|meth)\b/i,
-      
-      // Religious/spiritual
-      /\b(god|bible|quran|torah|spiritual|prayer|soul|spirit|religion|religious|faith|holy|sacred|divine)\b.+\b(hydropon|plant)\b/i,
-      /\b(hydropon|plant)\b.+\b(god|bible|quran|torah|spiritual|prayer|soul|spirit|religion|religious|faith|holy|sacred|divine)\b/i,
-      
-      // Personal advice
-      /\b(should i|advice for me|my life|my career|my relationship|my spouse|my partner|my family|my parents|my children|my kids|my marriage|my divorce)\b/i,
-      
-      // Jokes/sarcasm/non-serious
-      /\b(joke|funny|humorous|entertaining|amusing|comedy|satire|parody|lol|lmao|rofl)\b.+\b(hydropon|plant)\b/i,
-      
-      // Politics with plants
-      /\b(democrat|republican|election|political|president|governor|senator|congress|government|liberal|conservative|policy|regulation|law|legislation)\b.+\b(hydropon|plant)\b/i,
-      /\b(hydropon|plant)\b.+\b(democrat|republican|election|political|president|governor|senator|congress|government|liberal|conservative|policy|regulation|law|legislation)\b/i,
-    ];
+    // 1. ALLOW most hydroponic questions - be more permissive
+    const message_lower = message.toLowerCase();
     
-    // Check if the message matches any of our immediate rejection patterns
-    if (quickRejectPatterns.some(pattern => pattern.test(message))) {
-      console.log('Quick rejection pattern matched');
-      return false;
+    // Quick approval for obvious hydroponic terms
+    const hydroponicTerms = /\b(hydropon|hydroponic|plant|grow|growing|nutrient|water|ph|light|seed|farm|crop|cultivat|greenhouse|garden|agriculture|lettuce|tomato|basil|spinach|kale|herb|vegetable|fruit|root|leaf|stem|flower|soil|fertilizer|dwc|nft|ebb|flow|aeropon|drip|system|setup|ppm|ec|tds)|what.*(and all|everything).*answer|what.*can.*you.*(help|do|answer)|tell.*about.*yourself|who.*are.*you|what.*are.*you|how.*work|explain.*yourself/i.test(message_lower);
+    
+    if (hydroponicTerms) {
+      // Even if it contains hydroponic terms, check for obviously problematic content
+      const severeProblems = [
+        /\b(superman|batman|spider[ -]?man|avengers|fictional|superhero|dragon|wizard|jedi|pokemon)\b/i,
+        /\b(thc|cannabis|marijuana|cocaine|heroin|meth)\b/i,
+        /\b(cure cancer|treat aids|heal diabetes)\b/i,
+        /\b(kill|murder|violence|bomb|weapon)\b/i
+      ];
+      
+      if (severeProblems.some(pattern => pattern.test(message_lower))) {
+        return false;
+      }
+      
+      // For hydroponic-related questions, be very permissive
+      return true;
     }
     
-    // 2. LLM-BASED CLASSIFICATION with enhanced prompt
-    const classifierPrompt = `
-    TASK: You are a binary classifier that determines if a question is related STRICTLY to REAL-WORLD hydroponics/plant cultivation or not.
-    INPUT: "${message}"
-    
-    Rules:
-    - VALID topics: real-world hydroponics, actual plant growing, practical agriculture, factual farming, realistic gardening
-    - INVALID topics: 
-      * Anything not related to plants or agriculture
-      * FICTIONAL scenarios or characters
-      * HYPOTHETICAL implausible situations
-      * Questions about NON-EXISTENT entities
-      * POLITICAL or RELIGIOUS discussions even if they mention plants
-      * MEDICAL claims or advice related to plants
-      * Questions about CONTROLLED SUBSTANCES
-      * PERSONAL advice questions that mention plants
-      * Questions that start about plants but then ask about unrelated topics
-      * JOKES or NON-SERIOUS questions about plants
-      * Questions asking plants to have FEELINGS, THOUGHTS, or CONSCIOUSNESS
-    
-    IMPORTANT: The entire question must be PURELY about practical plant cultivation. If it contains ANY non-plant-related elements, mark it OFF-TOPIC.
-    
-    Examples of OFF-TOPIC questions:
-    - "How do I grow tomatoes hydroponically and what movie should I watch tonight?"
-    - "Do hydroponic plants feel sad without soil?"
-    - "Can hydroponic basil cure my headaches?"
-    - "Should I leave my spouse to focus on my hydroponic farm?"
-    - "What does the Bible say about hydroponics?"
-    - "How to maximize THC in hydroponic cannabis?"
-    - "Is hydroponics more aligned with liberal or conservative values?"
-    - "Tell me a funny joke about hydroponic lettuce."
-    
-    OUTPUT: Respond ONLY with "ON-TOPIC" if the question is ENTIRELY about practical, real-world hydroponics/agriculture, or "OFF-TOPIC" for any question that includes non-plant elements or falls into the INVALID categories.
-    `;
-    
+    // 2. LLM Classification for borderline cases only
+    const classifierPrompt = `Is this question related to hydroponics, plant growing, or agriculture?
+
+Question: "${message}"
+
+You should answer "ON-TOPIC" for:
+- Any question about growing plants
+- Questions about plant care, nutrients, water, pH, lighting
+- Questions about farming or gardening
+- Questions about what the assistant can help with
+- General questions about capabilities
+- Simple greetings if they mention plants
+
+Only answer "OFF-TOPIC" for:
+- Pure entertainment (movies, games, sports)
+- Pure technology (computers, phones, apps)
+- Pure politics or religion
+- Pure medical advice for humans
+- Fictional characters or stories
+- Illegal activities
+
+Respond with only "ON-TOPIC" or "OFF-TOPIC":`;
+
     const response = await llmService.generateResponse(
       [{ role: 'user', content: classifierPrompt }],
       {
         provider: 'gemini',
         model: 'gemini-2.0-flash',
-        temperature: 0.1,
+        temperature: 0.3,
         maxTokens: 10
       }
     );
     
     const isOnTopic = response.trim().includes("ON-TOPIC");
-    console.log(`LLM classifier result for "${message.slice(0, 30)}...": ${isOnTopic ? 'ON-TOPIC' : 'OFF-TOPIC'}`);
+    console.log(`LLM classifier result for "${message.slice(0, 50)}...": ${isOnTopic ? 'ON-TOPIC' : 'OFF-TOPIC'}`);
     return isOnTopic;
+    
   } catch (error) {
     console.warn('Topic classification failed:', error);
     
-    // 3. ENHANCED FALLBACK CHECK
+    // 3. VERY PERMISSIVE FALLBACK
     const message_lower = message.toLowerCase();
     
-    // Check for mixed content: starts with hydroponics but adds other topics
-    const containsHydroponicTerms = /\b(hydropon|plant|grow|nutrient|water|ph|light|seed|farm|crop|cultivat|greenhouse|garden|agriculture)\b/i.test(message_lower);
+    // Only reject obviously non-plant related content
+    const clearlyOffTopic = [
+      /\b(movie|film|celebrity|actor|actress|director)\b/i,
+      /\b(sports|football|basketball|soccer|tennis|golf)\b/i,
+      /\b(computer|programming|software|app|phone|internet)\b/i,
+      /\b(politics|election|president|government|democrat|republican)\b/i,
+      /\b(religion|god|bible|prayer|church|mosque|temple)\b/i,
+      /\b(superman|batman|fictional|superhero|movie)\b/i
+    ];
     
-    if (containsHydroponicTerms) {
-      // If it contains hydroponics terms, check for problematic combinations
-      
-      // Dual-purpose questions
-      if (/\b(and also|as well as|while you're at it|besides that|additionally|on another note)\b/i.test(message_lower)) {
-        console.log('Dual-purpose question detected');
-        return false;
-      }
-      
-      // Medical claims
-      if (/\b(cure|treat|heal|therapy|medicine|medical|disease|illness|remedy|symptoms)\b/i.test(message_lower)) {
-        console.log('Medical claim detected');
-        return false;
-      }
-      
-      // Controlled substances
-      if (/\b(thc|cannabis|marijuana|weed|pot|cocaine|heroin|psychedelic|mushroom|psilocybin|lsd|meth)\b/i.test(message_lower)) {
-        console.log('Controlled substance detected');
-        return false;
-      }
-      
-      // Personal advice
-      if (/\b(should i|advice for me|my life|my career|my relationship|my spouse|my partner|my family|my parents|my children|my kids|my marriage|my divorce)\b/i.test(message_lower)) {
-        console.log('Personal advice request detected');
-        return false;
-      }
-      
-      // Plant personification
-      if (/\b(plants|crops).+\b(feel|think|talk|say|opinion|emotions|sentient|consciousness)\b/i.test(message_lower)) {
-        console.log('Plant personification detected');
-        return false;
-      }
+    // Only reject if it clearly matches off-topic patterns AND doesn't mention plants
+    const containsPlantTerms = /\b(plant|grow|hydroponic|garden|farm|crop|vegetable|fruit|nutrient|water|ph|seed)\b/i.test(message_lower);
+    
+    if (containsPlantTerms) {
+      return true; // If it mentions plants at all, allow it
     }
     
-    // Fall back to regular keyword check for everything else
-    return !isOffTopicQuestion(message);
+    // Only reject if clearly off-topic
+    return !clearlyOffTopic.some(pattern => pattern.test(message_lower));
+  }
+}
+
+async function triggerTitleGeneration(conversationId: string, token: string) {
+  try {
+    // Get conversation messages to check count
+    const session = await sessionService.validateSession(token)
+    if (!session) {
+      console.warn('Invalid session for title generation')
+      return
+    }
+    
+    const messages = await sessionService.getConversationMessages(conversationId, session.sessionId)
+    
+    // Only generate title after 3rd or 4th message (2nd exchange) and if no title exists yet
+    if ((messages.length >= 3 && messages.length <= 4)) {
+      // Check if conversation already has a title
+      const conversations = await sessionService.getConversations(session.sessionId);
+      const currentConv = conversations.find(conv => conv.id === conversationId);
+      
+      // Only generate if no title exists yet
+      if (!currentConv?.title) {
+        console.log(`Triggering title generation for conversation ${conversationId} with ${messages.length} messages (no title exists)`);
+        
+        // Make async call to title generation (don't wait for it)
+        fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/chat/generate-title`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ conversationId })
+        }).catch(error => {
+          console.warn('Title generation failed:', error)
+        })
+      } else {
+        console.log(`Conversation already has title: "${currentConv.title}"`)
+      }
+    } else {
+      console.log(`Not generating title yet: ${messages.length} messages (need 3-4 and no existing title)`)
+    }
+  } catch (error) {
+    console.warn('Title generation trigger failed:', error)
   }
 }

@@ -132,6 +132,33 @@ export async function POST(request: NextRequest) {
       type: 'plant_followup',
       timestamp: new Date().toISOString()
     } as any);
+    // Trigger title generation for plant conversations - ONLY if no title exists
+    try {
+      const messages = await sessionService.getConversationMessages(conversationId, session.sessionId)
+      
+      // Check if conversation already has a title  
+      const conversations = await sessionService.getConversations(session.sessionId);
+      const currentConv = conversations.find(conv => conv.id === conversationId);
+      
+      // Only generate title if no title exists yet AND we have the right message count
+      if (!currentConv?.title && (messages.length === 3 || messages.length === 4)) {
+        console.log(`Triggering plant follow-up title generation for conversation ${conversationId}`)
+        fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/chat/generate-title`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ conversationId })
+        }).catch(error => {
+          console.warn('Title generation failed:', error)
+        })
+      } else if (currentConv?.title) {
+        console.log(`Plant follow-up: Conversation already has title: "${currentConv.title}" - not generating new one`)
+      }
+    } catch (error) {
+      console.warn('Title generation trigger failed:', error)
+    }
 
     return NextResponse.json({
       success: true,

@@ -52,7 +52,7 @@ import {
   Description as FileTextIcon,
   Settings as SettingsIcon,
   Upload as UploadIcon,
-  Chat as MessageSquareIcon,
+  //Chat as MessageSquareIcon,
   Book as BookIcon,
   Delete as DeleteIcon,
   Menu as MenuIcon,
@@ -941,9 +941,7 @@ export default function ChatInterface() {
                   },
                 }}
               >
-                <ListItemIcon>
-                  <MessageSquareIcon />
-                </ListItemIcon>
+                {/* No icon - just the title */}
                 <ListItemText
                   primary={conversation.title || 'New Chat'}
                   secondary={`${conversation.messageCount} messages`}
