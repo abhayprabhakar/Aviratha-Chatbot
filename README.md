@@ -53,6 +53,25 @@ A **production-ready** Next.js-powered chatbot with advanced Retrieval-Augmented
 - **Authentication**: JWT-based secure session management
 - **File Processing**: Advanced text extraction and chunking algorithms
 
+## 🔧 Configuration HOW TO GET API KEYS
+
+#### 🟢 Google Gemini (Recommended - Free Tier)
+- Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- Add to `GEMINI_API_KEY` in `.env`
+
+#### 🟢 Plant ID API KEY (Recommended - Free Tier)
+- Go to the website [Plant ID](https://plant.id/)
+- Sign in through your google account
+- Then go to this website [API KEY Website](https://admin.kindwise.com/login?next=/)
+- Login through the same email in the website
+- Click on CREATE NEW API KEY
+- Select "plant.id - Plant species identification and health assessment." option
+- Give a name for your api key
+- assign MAX credits then create 
+- copy the api key
+- Add `PLANTID_API_KEY` in `.env`
+
+
 ## 📦 Installation
 
 1. **Clone the repository**
@@ -67,27 +86,15 @@ A **production-ready** Next.js-powered chatbot with advanced Retrieval-Augmented
    ```
 
 3. **Set up environment variables**
-   Create a `.env.local` file in the root directory:
+   Create a `.env` file in the root directory:
    ```bash
    # Database
-   DATABASE_URL="file:./dev.db"
+   DATABASE_URL="file:./prisma/dev.db"
 
-   # Primary LLM API Keys (configure at least one)
-   OPENAI_API_KEY="your-openai-api-key"
-   GEMINI_API_KEY="your-gemini-api-key"              # Recommended: Free tier available
-   ANTHROPIC_API_KEY="your-anthropic-api-key"
-   
-   # Local AI (optional)
-   OLLAMA_BASE_URL="http://localhost:11434"
+   # Primary LLM API Keys
+   GEMINI_API_KEY="your-gemini-api-key"      
 
-   # Embedding Providers (optional alternatives to OpenAI)
-   HUGGINGFACE_API_KEY="your-huggingface-token"
-   COHERE_API_KEY="your-cohere-api-key"
-
-   # Vector Storage (optional for production)
-   PINECONE_API_KEY="your-pinecone-api-key"
-   PINECONE_ENVIRONMENT="your-pinecone-environment"
-   PINECONE_INDEX_NAME="your-pinecone-index"
+   PLANTID_API_KEY="your-plant-id-api-key"
 
    # Security & Configuration
    JWT_SECRET="your-super-secret-jwt-key-min-32-chars"
@@ -111,43 +118,6 @@ A **production-ready** Next.js-powered chatbot with advanced Retrieval-Augmented
 
 6. **Access the application**
    Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 🔧 Configuration
-
-### LLM Providers Setup
-
-#### 🟢 Google Gemini (Recommended - Free Tier)
-- Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
-- Add to `GEMINI_API_KEY` in `.env.local`
-- **Free tier**: 60 requests per minute with generous usage limits
-- Supported models: `gemini-pro`, `gemini-pro-vision`, `text-embedding-004`
-
-#### OpenAI
-- Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-- Add to `OPENAI_API_KEY` in `.env.local`
-- Supported models: `gpt-4`, `gpt-4-turbo`, `gpt-3.5-turbo`
-- Embedding models: `text-embedding-ada-002`, `text-embedding-3-small/large`
-
-#### Anthropic Claude
-- Get your API key from [Anthropic Console](https://console.anthropic.com/)
-- Add to `ANTHROPIC_API_KEY` in `.env.local`
-- Supported models: `claude-3-5-sonnet-20241022`, `claude-3-haiku-20240307`
-
-#### 🦙 Ollama (Local - Privacy Focused)
-- Install [Ollama](https://ollama.com/) locally
-- Pull models: `ollama pull llama3.2` or `ollama pull mistral`
-- Start service: `ollama serve`
-- Automatically detected at `http://localhost:11434`
-
-#### 🤗 Hugging Face (Open Source)
-- Get your token from [Hugging Face](https://huggingface.co/settings/tokens)
-- Add to `HUGGINGFACE_API_KEY` in `.env.local`
-- Supported models: `sentence-transformers/all-MiniLM-L6-v2`, `BAAI/bge-small-en-v1.5`
-
-#### Cohere
-- Get your API key from [Cohere](https://cohere.ai)
-- Add to `COHERE_API_KEY` in `.env.local`
-- Supported models: `embed-english-v3.0`, `embed-english-light-v3.0`
 
 ### Embedding Providers Configuration
 
