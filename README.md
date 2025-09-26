@@ -62,7 +62,7 @@ A **production-ready** Next.js-powered chatbot with advanced Retrieval-Augmented
 #### 🟢 Plant ID API KEY (Recommended - Free Tier)
 - Go to the website [Plant ID](https://plant.id/)
 - Sign in through your google account
-- Then go to this website [API KEY Website](https://admin.kindwise.com/login?next=/)
+- Then go to this website [API KEY Website](https://admin.kindwise.com/)
 - Login through the same email in the website
 - Click on CREATE NEW API KEY
 - Select "plant.id - Plant species identification and health assessment." option
